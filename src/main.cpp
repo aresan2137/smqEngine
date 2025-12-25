@@ -20,7 +20,7 @@ int main() {
 
     smq::Material material = smq::Material("resources/Shaders/basic_vs.glsl", "resources/Shaders/basic_fs.glsl"); // creates material from shaders
 
-    smq::Texture texture = smq::Texture("resources/textures/tbj.png"); 
+    smq::Texture texture = smq::Texture("resources/textures/face.png"); 
     
     smq::Mesh mesh = smq::Mesh("resources/cube.smf");
 
