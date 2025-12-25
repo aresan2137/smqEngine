@@ -2,6 +2,32 @@
 
 #include "../Include.h"
 
+#ifdef _WIN32
+#include <windows.h>
+
+void HideCursor() {
+    while (ShowCursor(FALSE) >= 0);
+}
+
+void ShowCursor() {
+    while (ShowCursor(TRUE) < 0);
+}
+#else
+#error "In smq/Components/FreeCamera.cpp is win32api dependent code that hides the cursor. you can A: make dummy instructions that to nothing but cursor will be shown B: implement proper code and if you do that please contribute that code"
+
+/* dummy code
+void HideCursor() {
+
+}
+
+void ShowCursor() {
+
+}
+*/
+
+#endif
+
+
 namespace  smq {
     namespace comp {
 
@@ -61,6 +87,8 @@ namespace  smq {
 
             ImGui::SliderFloat("Sensivity", &i_sensivity, 0.1f, 5.0f);
             ImGui::SliderFloat("Speed", &i_speed, 0.1f, 30.0f);
+
+            ImGui::Text(("FPS: " + std::to_string(1 / Delta)).c_str());
 
             ImGui::End();
         }

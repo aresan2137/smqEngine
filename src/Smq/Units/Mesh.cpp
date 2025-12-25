@@ -4,6 +4,7 @@
 
 namespace smq {
     Mesh::Mesh() {
+
     }
 
 	Mesh::Mesh(std::string Filename) {
