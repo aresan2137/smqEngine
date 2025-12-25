@@ -3,8 +3,7 @@
 namespace smq {
 
 	Material::Material() {
-		i_shader = 0;
-		Log("Material Created Sucesfully");
+		
 	}
 
 	Material::Material(const std::string vertexShaderFilename, const std::string fragmentShadeFilename) {
@@ -47,97 +46,101 @@ namespace smq {
 		Log("Material Deleted Sucesfully");
 	}
 
+	bool Material::Valid() {
+		return i_shader != 0;
+	}
+
 	void Material::ActivateMaterial() {
 		glUseProgram(i_shader);
 	}
 
-	void Material::UpdateAtribute(std::string name, float value) {
+	void Material::UpdateAtribute(std::string name, float value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform1f(loc, value);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector2 value) {
+	void Material::UpdateAtribute(std::string name, Vector2 value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform2f(loc, value.x, value.y);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector3 value) {
+	void Material::UpdateAtribute(std::string name, Vector3 value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform3f(loc, value.x, value.y, value.z);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector4 value) {
+	void Material::UpdateAtribute(std::string name, Vector4 value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform4f(loc, value.x, value.y, value.z, value.w);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, int value) {
+	void Material::UpdateAtribute(std::string name, int value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform1i(loc, value);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector2Int value) {
+	void Material::UpdateAtribute(std::string name, Vector2Int value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform2i(loc, value.x, value.y);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector3Int value) {
+	void Material::UpdateAtribute(std::string name, Vector3Int value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform3i(loc, value.x, value.y, value.z);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector4Int value) {
+	void Material::UpdateAtribute(std::string name, Vector4Int value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniform4i(loc, value.x, value.y, value.z, value.w);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 
-	void Material::UpdateAtribute(std::string name, Matrix4 value) {
+	void Material::UpdateAtribute(std::string name, Matrix4 value, bool Warn) {
 		ActivateMaterial();
 		int loc = glGetUniformLocation(i_shader, name.c_str());
 		if (loc != -1) {
 			glUniformMatrix4fv(loc, 1, false, &value[0][0]);
 		} else {
-			smq::Warn("UpdateAtribute: update failed");
+			if (Warn) smq::Warn("UpdateAtribute: update failed");
 		}
 	}
 

@@ -4,7 +4,6 @@
 
 namespace smq {
     Mesh::Mesh() {
-        Log("Mesh Created Sucesfully");
     }
 
 	Mesh::Mesh(std::string Filename) {

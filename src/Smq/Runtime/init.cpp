@@ -17,7 +17,7 @@ namespace smq {
         if (!window) Error("window was not created correctly");
 
         glfwMakeContextCurrent(window);
-
+        
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) Error("Glad initation was not sucsesfull");
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -26,6 +26,8 @@ namespace smq {
         glCullFace(GL_BACK);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+
+        glfwSwapInterval(1);
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();

@@ -1,7 +1,5 @@
 ﻿#include "Smq/Smq.h"
 
-#include "code/Mygui.h"
-#include "code/CameraControler.h"
 #include "code/RotationScript.h"
 
 int main() {
@@ -14,7 +12,7 @@ int main() {
     smq::Object* root = new smq::Object();
     scene.rootObject = root;
 
-    smq::Material material = smq::Material("resources/basic_vs.glsl", "resources/basic_fs.glsl");
+    smq::Material material = smq::Material("resources/Shaders/basic_vs.glsl", "resources/Shaders/basic_fs.glsl");
 
     smq::Texture texture1 = smq::Texture("resources/textures/cord.png");
     smq::Texture texture2 = smq::Texture("resources/textures/tbj.png");
@@ -36,10 +34,8 @@ int main() {
     root->AddComponent(root_ModelMaterial);
     smq::comp::Position3D* root_Position3D = new smq::comp::Position3D();
     root->AddComponent(root_Position3D);
-    MyGui* root_MyGui = new MyGui(cube_Position3D);
-    root->AddComponent(root_MyGui);
-    CameraControler* root_CameraControler = new CameraControler(camera, root_MyGui);
-    root->AddComponent(root_CameraControler);
+    smq::comp::FreeCamera* root_FreeCamera = new smq::comp::FreeCamera(camera);
+    root->AddComponent(root_FreeCamera);
     
     
 

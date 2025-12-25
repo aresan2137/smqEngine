@@ -12,3 +12,6 @@ extern ImGuiIO* io;
 
 void InputInit();
 void InputUpdate();
+
+void InitDrawing(smq::Scene& scene);
+void DrawScene(smq::Scene& scene);

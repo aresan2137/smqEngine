@@ -109,27 +109,29 @@ namespace smq {
 
 		Material();
 		Material::Material(const std::string vertexShaderFilename, const std::string fragmentShadeFilename);
+
 		void Delete();
+		bool Valid();
 
 		void ActivateMaterial();
 
-		void UpdateAtribute(std::string name, float value);
-		void UpdateAtribute(std::string name, Vector2 value);
-		void UpdateAtribute(std::string name, Vector3 value);
-		void UpdateAtribute(std::string name, Vector4 value);
+		void UpdateAtribute(std::string name, float value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector2 value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector3 value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector4 value, bool Warn = true);
 
-		void UpdateAtribute(std::string name, int value);
-		void UpdateAtribute(std::string name, Vector2Int value);
-		void UpdateAtribute(std::string name, Vector3Int value);
-		void UpdateAtribute(std::string name, Vector4Int value);
-		
-		void UpdateAtribute(std::string name, Matrix4 value);
+		void UpdateAtribute(std::string name, int value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector2Int value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector3Int value, bool Warn = true);
+		void UpdateAtribute(std::string name, Vector4Int value, bool Warn = true);
+
+		void UpdateAtribute(std::string name, Matrix4 value, bool Warn = true);
 
 		void SetMVP(Matrix4 value);
 		void SetTexture(int slot);
 
 	private:
-		unsigned int i_shader;
+		unsigned int i_shader = 0;
 
 		int i_mvp = -1;
 		int i_tex = -1;
@@ -182,8 +184,15 @@ namespace smq {
 	public:
 		Camera();
 
+		Vector2Int renderResolution = { 1280,720 };
+		Vector2Int ScreenResolution = { 1280,720 };
+
+		Material postProcesingMaterial;
+
 		Vector3 position = { 0.0f,0.0f,0.0f };
 		Vector3 rotation = { 0.0f,0.0f,0.0f };
+
+		float FOV = 60.0f;
 
 	private:
 
