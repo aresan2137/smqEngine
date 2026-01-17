@@ -1,10 +1,10 @@
 ﻿#include "../Include.h"
 
-GLFWwindow* window = nullptr;
+GLFWwindow* i_window = nullptr;
 ImGuiIO* io = nullptr;
 
 namespace smq {
-    void init(Vector2 size, std::string WindowName) {
+    void init(Window* window) {
         if (!glfwInit()) Error("glfw init was not sucesfull");
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -12,11 +12,11 @@ namespace smq {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-        window = glfwCreateWindow(size.x, size.y, WindowName.c_str(), nullptr, nullptr);
+        i_window = glfwCreateWindow(window->size.x, window->size.y, window->title.c_str(), nullptr, nullptr);
 
-        if (!window) Error("window was not created correctly");
+        if (!i_window) Error("window was not created correctly");
 
-        glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(i_window);
         
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) Error("Glad initation was not sucsesfull");
 
@@ -26,6 +26,9 @@ namespace smq {
         glCullFace(GL_BACK);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        glEnable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glDepthMask(GL_FALSE); 
 
         glfwSwapInterval(1);
 
@@ -33,17 +36,21 @@ namespace smq {
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForOpenGL(window, false);
+        ImGui_ImplGlfw_InitForOpenGL(i_window, false);
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
         InputInit();
 
         io = &ImGui::GetIO();
 
+        InitSound();
+
         Log("init sucess");
     }
 
     void quit() {
         glfwTerminate();
+
+        ShutdownSound();
     }
 }

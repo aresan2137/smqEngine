@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "../ExternMakers/sam.h"
+
 namespace smq {
 
 	struct Vector2 {
@@ -38,8 +40,25 @@ namespace smq {
 		}
 	};
 
+	struct Window {
+		Vector2Int size;
+		std::string title;
+	};
+
+	class Object;
+	class Camera;
+
+	struct Scene {
+		Object* rootObject;
+		Camera* camera;
+	};
+
 	enum Key : unsigned int {
 		Key_Null = 0,
+
+		Key_Mouse_Left = 1,
+		Key_Mouse_Right = 2,
+		Key_Mouse_Middle = 3,
 
 		Key_A = 65,
 		Key_B = 66,
@@ -85,10 +104,10 @@ namespace smq {
 		Key_Tab = 258,
 		Key_Backspace = 259,
 
-		Key_Right = 262,
-		Key_Left = 263,
-		Key_Down = 264,
-		Key_Up = 265,
+		Key_Arrow_Right = 262,
+		Key_Arrow_Left = 263,
+		Key_Arrow_Down = 264,
+		Key_Arrow_Up = 265,
 
 		Key_F1 = 290,
 		Key_F2 = 291,
@@ -104,45 +123,77 @@ namespace smq {
 		Key_F12 = 301,
 	};	
 
+	enum GlUniform {
+		GlUniform_Float,
+		GlUniform_Vec2,
+		GlUniform_Vec3,
+		GlUniform_Vec4,
+		GlUniform_Int,
+		GlUniform_IVec2,
+		GlUniform_IVec3,
+		GlUniform_IVec4,
+		GlUniform_Mat4
+	};
+
+	struct GlAtribute {
+		GlUniform type;
+		union {
+			float f;
+			Vector2 f2;
+			Vector3 f3;
+			Vector4 f4;
+			int i;
+			Vector2Int i2;
+			Vector3Int i3;
+			Vector4Int i4;
+			Matrix4 m4;
+		};
+	};
+
+	using Shader = unsigned int;
+
+	class Texture;
+
 	class Material {
 	public:
 
-		Material();
-		Material::Material(const std::string vertexShaderFilename, const std::string fragmentShadeFilename);
-
-		void Delete();
-		bool Valid();
+		Material(Shader shader, std::vector<unsigned int> maps, std::vector<GlAtribute> uniforms);
 
 		void ActivateMaterial();
 
-		void UpdateAtribute(std::string name, float value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector2 value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector3 value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector4 value, bool Warn = true);
+		void UpdateUniform(ShaderUniform uniform, float data);
+		void UpdateUniform(ShaderUniform uniform, Vector2 data);
+		void UpdateUniform(ShaderUniform uniform, Vector3 data);
+		void UpdateUniform(ShaderUniform uniform, Vector4 data);
 
-		void UpdateAtribute(std::string name, int value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector2Int value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector3Int value, bool Warn = true);
-		void UpdateAtribute(std::string name, Vector4Int value, bool Warn = true);
+		void UpdateUniform(ShaderUniform uniform, int data);
+		void UpdateUniform(ShaderUniform uniform, Vector2Int data);
+		void UpdateUniform(ShaderUniform uniform, Vector3Int data);
+		void UpdateUniform(ShaderUniform uniform, Vector4Int data);
 
-		void UpdateAtribute(std::string name, Matrix4 value, bool Warn = true);
+		void UpdateUniform(ShaderUniform uniform, Matrix4 data);
 
-		void SetMVP(Matrix4 value);
-		void SetTexture(int slot);
+		void UpdateMVP(Matrix4 data);
+		void AddTexture(Texture* texture);
 
 	private:
-		unsigned int i_shader = 0;
+		Shader i_shader;
+		std::vector<unsigned int> i_maps;
+		std::vector<GlAtribute> i_uniforms;
 
-		int i_mvp = -1;
-		int i_tex = -1;
+		std::vector<Texture*> i_textures;
+
+		unsigned int i_mvp;
+		Matrix4 i_mvpV;
+
 	};
 
 	class Mesh {
 	public:
 
 		Mesh();
-		Mesh(std::string Filename); // Loads smf file
-		Mesh(std::vector<float> data, std::vector<unsigned int> indices);
+		Mesh(std::string Filename);
+		Mesh(std::vector<float> data, std::vector<unsigned int> indices, std::vector<unsigned int> layout);
 		void Delete();
 
 		void ActivateMesh();
@@ -184,15 +235,19 @@ namespace smq {
 	public:
 		Camera();
 
-		Vector2Int renderResolution = { 1280,720 };
-		Vector2Int ScreenResolution = { 1280,720 };
+		void ReCalculateProjection();
 
-		Material postProcesingMaterial;
+		Vector2Int renderResolution = { 1280,720 };
+
+		Window* window = nullptr;
+
+		Material* postProcesingMaterial = nullptr;
 
 		Vector3 position = { 0.0f,0.0f,0.0f };
 		Vector3 rotation = { 0.0f,0.0f,0.0f };
 
 		float FOV = 60.0f;
+		bool Perspective = true; // true = perspective, false = ortographic
 
 	private:
 
@@ -203,7 +258,7 @@ namespace smq {
 	public:
 		Component();
 		
-		Object* GetObject();
+		Object* GetParent();
 
 		virtual void Start();
 		virtual void Update(float Delta);
@@ -225,6 +280,7 @@ namespace smq {
 
 		void AddComponent(Component* component);
 		void RemoveComponent(Component* component, bool destroy = true);
+
 		template<typename T>
 		inline T* FindComponent() {
 			for (int i = 0; i < i_components.size(); i++) {
@@ -242,6 +298,7 @@ namespace smq {
 		std::vector<Object*> GetAllChildren();
 
 		void SetParent(Object* parent);
+		Object* GetParent();
 
 		comp::Position3D* GetPosition3D();
 		comp::ModelMaterial* GetModelMaterial();

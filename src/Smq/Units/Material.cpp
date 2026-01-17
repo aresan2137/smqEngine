@@ -2,159 +2,86 @@
 
 namespace smq {
 
-	Material::Material() {
-		
-	}
+	Material::Material(Shader shader, std::vector<unsigned int> maps, std::vector<GlAtribute> uniforms)
+		: i_shader(shader)
+		, i_maps(maps)
+		, i_uniforms(uniforms)
 
-	Material::Material(const std::string vertexShaderFilename, const std::string fragmentShadeFilename) {
-		std::string vertexShaderCode = LoadFile(vertexShaderFilename);
-		std::string fragmentShaderCode = LoadFile(fragmentShadeFilename);
-
-		i_shader = glCreateProgram();
-
-		// vertex shader
-		unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		const char* vertexShaderCode_cstr = vertexShaderCode.c_str();
-		glShaderSource(vertexShader, 1, &vertexShaderCode_cstr, nullptr);
-		glCompileShader(vertexShader);
-
-		// fragment shader 
-		unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		const char* fragmentShaderCode_cstr = fragmentShaderCode.c_str();
-		glShaderSource(fragmentShader, 1, &fragmentShaderCode_cstr, nullptr);
-		glCompileShader(fragmentShader);
-
-		glAttachShader(i_shader, vertexShader);
-		glAttachShader(i_shader, fragmentShader);
-		glLinkProgram(i_shader);
-		glValidateProgram(i_shader);
-
-		glDeleteProgram(vertexShader);
-		glDeleteProgram(fragmentShader);
-
-		glUseProgram(i_shader);
-		i_mvp = glGetUniformLocation(i_shader, "u_mvp");
-		i_tex = glGetUniformLocation(i_shader, "u_tex");
-
-		Log("Material Created Sucesfully");
-	}
-
-	void Material::Delete() {
-		if (i_shader != 0) {
-			glDeleteProgram(i_shader);
-		}
-		Log("Material Deleted Sucesfully");
-	}
-
-	bool Material::Valid() {
-		return i_shader != 0;
+	{
+		i_mvp = glGetUniformLocation(shader, "u_mvp");
 	}
 
 	void Material::ActivateMaterial() {
 		glUseProgram(i_shader);
+		for (int i = 0; i < i_maps.size(); i++) {
+			if (i_uniforms[i].type == smq::GlUniform_Float)
+				glUniform1f(i_maps[i], i_uniforms[i].f);
+			if (i_uniforms[i].type == smq::GlUniform_Vec2)
+				glUniform2f(i_maps[i], i_uniforms[i].f2.x, i_uniforms[i].f2.y);
+			if (i_uniforms[i].type == smq::GlUniform_Vec3)
+				glUniform3f(i_maps[i], i_uniforms[i].f3.x, i_uniforms[i].f3.y, i_uniforms[i].f3.z);
+			if (i_uniforms[i].type == smq::GlUniform_Vec4)
+				glUniform4f(i_maps[i], i_uniforms[i].f4.x, i_uniforms[i].f4.y, i_uniforms[i].f4.z, i_uniforms[i].f4.w);
+			if (i_uniforms[i].type == smq::GlUniform_Int)
+				glUniform1i(i_maps[i], i_uniforms[i].i);
+			if (i_uniforms[i].type == smq::GlUniform_IVec2)
+				glUniform2i(i_maps[i], i_uniforms[i].i2.x, i_uniforms[i].i2.y);
+			if (i_uniforms[i].type == smq::GlUniform_IVec3)
+				glUniform3i(i_maps[i], i_uniforms[i].i3.x, i_uniforms[i].i3.y, i_uniforms[i].i3.z);
+			if (i_uniforms[i].type == smq::GlUniform_IVec4)
+				glUniform4i(i_maps[i], i_uniforms[i].i4.x, i_uniforms[i].i4.y, i_uniforms[i].i4.z, i_uniforms[i].i4.w);
+			if (i_uniforms[i].type == smq::GlUniform_Mat4)
+				glUniformMatrix4fv(i_maps[i], 1, GL_FALSE, &i_uniforms[i].m4[0][0]);
+		}
+
+		for (int i = 0; i < i_textures.size(); i++) {
+			i_textures[i]->ActivateTexture(i);
+		}
+
+		glUniformMatrix4fv(i_mvp, 1, GL_FALSE, &i_mvpV[0][0]);
 	}
 
-	void Material::UpdateAtribute(std::string name, float value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform1f(loc, value);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, float data) {
+		i_uniforms[uniform].f = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector2 value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform2f(loc, value.x, value.y);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector2 data) {
+		i_uniforms[uniform].f2 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector3 value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform3f(loc, value.x, value.y, value.z);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector3 data) {
+		i_uniforms[uniform].f3 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector4 value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform4f(loc, value.x, value.y, value.z, value.w);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector4 data) {
+		i_uniforms[uniform].f4 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, int value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform1i(loc, value);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, int data) {
+		i_uniforms[uniform].i = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector2Int value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform2i(loc, value.x, value.y);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector2Int data) {
+		i_uniforms[uniform].i2 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector3Int value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform3i(loc, value.x, value.y, value.z);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector3Int data) {
+		i_uniforms[uniform].i3 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Vector4Int value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniform4i(loc, value.x, value.y, value.z, value.w);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Vector4Int data) {
+		i_uniforms[uniform].i4 = data;
 	}
 
-	void Material::UpdateAtribute(std::string name, Matrix4 value, bool Warn) {
-		ActivateMaterial();
-		int loc = glGetUniformLocation(i_shader, name.c_str());
-		if (loc != -1) {
-			glUniformMatrix4fv(loc, 1, false, &value[0][0]);
-		} else {
-			if (Warn) smq::Warn("UpdateAtribute: update failed");
-		}
+	void Material::UpdateUniform(ShaderUniform uniform, Matrix4 data) {
+		i_uniforms[uniform].m4 = data;
 	}
 
-	void Material::SetMVP(Matrix4 value) {
-		ActivateMaterial();
-		if (i_mvp != -1) {
-			glUniformMatrix4fv(i_mvp, 1, false, &value[0][0]);
-		}
+	void Material::UpdateMVP(Matrix4 data) {
+		i_mvpV = data;
 	}
 
-	void Material::SetTexture(int slot) {
-		ActivateMaterial();
-		if (i_tex != -1) {
-			glUniform1i(i_tex, slot);
-		}
+	void Material::AddTexture(Texture* texture) {
+		i_textures.push_back(texture);
 	}
 }

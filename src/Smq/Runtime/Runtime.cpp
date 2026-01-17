@@ -37,28 +37,28 @@ float Time = 0.0f;
 float TimePre = 0.0f;
 
 namespace smq {
-    void StartRuntime(Scene scene) {
+    void StartRuntime(Scene* scene) {
 
-        StartObject(scene.rootObject);
+        StartObject(scene->rootObject);
 
         InitDrawing(scene);
 
-        while (!glfwWindowShouldClose(window)) {
-            glfwSwapBuffers(window);
-            
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
+        while (!glfwWindowShouldClose(i_window)) {
+            glfwSwapBuffers(i_window);
+    
             InputUpdate();
             glfwPollEvents();
             
             DrawScene(scene);
 
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
             Time = (float)glfwGetTime();
             float Delta = Time - TimePre;
             TimePre = Time;
-            UpdateObject(scene.rootObject, Delta);
+            UpdateObject(scene->rootObject, Delta);
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -6,14 +6,24 @@ namespace smq {
 	}
 
 	Object::~Object() {
-		for (int i = 0; i < i_children.size(); i++) {
-			delete i_children[i];
+		if (i_parent) {
+			i_parent->RemoveChild(this, false);
 		}
+
+		for (int i = 0; i < i_children.size(); i++) {
+			if (i_children[i]) {
+				i_children[i]->i_parent = nullptr;
+				delete i_children[i];
+			}
+		}
+		i_children.clear();
+
 		for (int i = 0; i < i_components.size(); i++) {
 			delete i_components[i];
 		}
-		i_parent->RemoveChild(this);
-		Log("Object Deleted Sucesfully");
+		i_components.clear();
+
+		Log("Object Deleted Successfully");
 	}
 
 	void Object::AddComponent(Component* component) {
@@ -65,9 +75,20 @@ namespace smq {
 	void Object::RemoveChild(Object* object, bool destroy) {
 		for (int i = 0; i < i_children.size(); i++) {
 			if (i_children[i] == object) {
-				if (destroy) delete i_children[i];
-				i_children[i] = i_children[i_children.size() - 1];
+
+				Object* toDelete = nullptr;
+
+				if (destroy) {
+					toDelete = i_children[i];
+				}
+
+				i_children[i] = i_children.back();
 				i_children.pop_back();
+
+				if (toDelete) {
+					toDelete->i_parent = nullptr;
+					delete toDelete;
+				}
 				return;
 			}
 		}
@@ -83,6 +104,10 @@ namespace smq {
 
 	void Object::SetParent(Object* parent) {
 		i_parent = parent;
+	}
+
+	Object* Object::GetParent() {
+		return i_parent;
 	}
 
 	comp::Position3D* Object::GetPosition3D() {

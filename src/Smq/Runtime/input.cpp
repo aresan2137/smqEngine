@@ -1,8 +1,28 @@
 ﻿#include "../Include.h"
 
+#ifdef _WIN32
+#include <windows.h>
+
+void HideCursor() {
+    while (ShowCursor(FALSE) >= 0);
+}
+
+void ShowCursor() {
+    while (ShowCursor(TRUE) < 0);
+}
+#else 
+#warning "Cursor visibility not implemented for this platform"
+void HideCursor() {
+}
+void ShowCursor() {
+}
+#endif
+
+#define KEYS 348
+
 struct InputState {
-    bool keys[348]{};
-    bool keysPrevFrame[348]{};
+    bool keys[KEYS] = {};
+    bool keysPrevFrame[KEYS] = {};
     smq::Vector2 mousepos;
 } Input;
 
@@ -13,24 +33,30 @@ void KeyCallback(GLFWwindow*, int key, int, int action, int) {
     if (action == GLFW_RELEASE) Input.keys[key] = false;
 }
 
-void MouseCallback(GLFWwindow*, double xpos, double ypos) {
+void MouseCallback(GLFWwindow*, int key, int action, int) {
+    if (action == GLFW_PRESS)   Input.keys[key+1] = true;
+    if (action == GLFW_RELEASE) Input.keys[key+1] = false;
+}
+
+void MouseMovmentCallback(GLFWwindow*, double xpos, double ypos) {
     Input.mousepos.x = (float)xpos;
     Input.mousepos.y = (float)ypos;
 }
 
 void UpdateImGuiInput() {
     io->MousePos = ImVec2(Input.mousepos.x, Input.mousepos.y);
-    io->MouseDown[0] = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    io->MouseDown[0] = glfwGetMouseButton(i_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 }
 
 void InputInit() {
-    glfwSetKeyCallback(window, KeyCallback);
-    glfwSetCursorPosCallback(window, MouseCallback);
+    glfwSetKeyCallback(i_window, KeyCallback);
+    glfwSetMouseButtonCallback(i_window, MouseCallback);
+    glfwSetCursorPosCallback(i_window, MouseMovmentCallback);
 }
 
 void InputUpdate() {
     UpdateImGuiInput();
-    for (int i = 0; i < 348; i++) {
+    for (int i = 0; i < KEYS; i++) {
         Input.keysPrevFrame[i] = Input.keys[i];
     }
 }
@@ -51,4 +77,9 @@ namespace smq {
     Vector2 GetMousePositon() {
         return Input.mousepos;
     }
+
+    void SetCursor(bool visible) {
+        if (visible) ShowCursor();
+		else         HideCursor();
+    }    
 }

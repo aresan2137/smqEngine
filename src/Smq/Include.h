@@ -7,11 +7,16 @@
 
 #include "../smq/glmToMy.h"
 
-extern GLFWwindow* window;
+extern GLFWwindow* i_window;
 extern ImGuiIO* io;
+
+extern bool reCalculateProj;
 
 void InputInit();
 void InputUpdate();
 
-void InitDrawing(smq::Scene& scene);
-void DrawScene(smq::Scene& scene);
+void InitDrawing(smq::Scene* scene);
+void DrawScene(smq::Scene* scene);
+
+bool InitSound();
+void ShutdownSound();

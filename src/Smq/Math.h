@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Units.h"
+
 // Vector2
 
 inline smq::Vector2 operator+(const smq::Vector2& a, const smq::Vector2& b) {

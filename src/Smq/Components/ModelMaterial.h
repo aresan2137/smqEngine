@@ -7,22 +7,17 @@ namespace smq {
 		class ModelMaterial : public Component {
 		public:
 
-			ModelMaterial(Mesh mesh, Material material, Texture textrue);
-			ModelMaterial(Mesh mesh, Material material);
-			ModelMaterial();
+			ModelMaterial(Mesh* mesh, Material* material);
 
-			void SetMaterial(Material material);
-			void SetModel(Mesh mesh);
-			void SetTexture(Texture texture);
+			void SetMaterial(Material* material);
+			void SetModel(Mesh* mesh);
 
-			Material GetMaterial();
-			Mesh GetModel();
-			Texture GetTexture();
+			Material* GetMaterial();
+			Mesh* GetModel();
 
 		private:
-			Material i_material;
-			Mesh i_mesh;
-			Texture i_texture;
+			Material* i_material;
+			Mesh* i_mesh;
 		};
 	}
 }

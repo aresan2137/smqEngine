@@ -1,44 +1,43 @@
 ﻿#include "Smq/Smq.h"
 
-// This Code is a demo to show basic program
-
-// to control camera use wasd
-// to rotate camera pres z to togle rotation control
-
-#include "code/RotationScript.h"
+#include "ExternMakers/sam.h"
 
 int main() {
+
+	smq::Window* window = new smq::Window({{1280,720}, "Game" });
     
-    smq::init({ 1280,720 }, "Game"); // create window and init opengl 
+    smq::init(window);
 
-    smq::Scene scene;
+	initSam();
 
-    smq::Camera* camera = new smq::Camera();
-    scene.camera = camera;
-    smq::Object* root = new smq::Object();
-    scene.rootObject = root;
+	getMaterial(bacic)->AddTexture(getTexture(tile));
 
-    smq::Material material = smq::Material("resources/Shaders/basic_vs.glsl", "resources/Shaders/basic_fs.glsl"); // creates material from shaders
+	smq::PlayMusicLoop("resources/textures/music.wav");
+	smq::SetMusicVolume(0.8f);
 
-    smq::Texture texture = smq::Texture("resources/textures/face.png"); 
-    
-    smq::Mesh mesh = smq::Mesh("resources/cube.smf");
+	smq::Scene* scene = new smq::Scene();
+	scene->camera = new smq::Camera();
+	scene->camera->window = window;
+	scene->camera->postProcesingMaterial = getMaterial(noPost);
 
-    smq::Object* cube = new smq::Object();
-    root->AddChild(cube); // adds cube as child of root
-    smq::comp::ModelMaterial* cube_ModelMaterial = new smq::comp::ModelMaterial(mesh, material, texture); // component that gives renderer data to render - This is needed to render
-    cube->AddComponent(cube_ModelMaterial);
-    smq::comp::Position3D* cube_Position3D = new smq::comp::Position3D(); // this contains positional data - This is optional if not added it will render at 0,0,0 with no rotation
-    cube->AddComponent(cube_Position3D);
-    RotationScript* cube_RotationScript = new RotationScript(cube_Position3D); // this is demo that rotates the cube code is in code/RotationScript.h/cpp
-    cube->AddComponent(cube_RotationScript);
+	scene->rootObject = new smq::Object();
+	scene->rootObject->AddComponent(new smq::comp::FreeCamera(scene->camera));
 
-    smq::comp::FreeCamera* root_FreeCamera = new smq::comp::FreeCamera(camera); // this allows to control the camera
-    root->AddComponent(root_FreeCamera);
-    
-    
+	smq::Object* cube_o = new smq::Object();
+	cube_o->AddComponent(new smq::comp::Position3D());
+	cube_o->GetPosition3D()->position = { 0.0f,0.0f,-5.0f };
+	cube_o->AddComponent(new smq::comp::ModelMaterial(getMesh(cube), getMaterial(bacic)));
+	scene->rootObject->AddChild(cube_o);
 
     smq::StartRuntime(scene);
 
     smq::quit();
 }
+
+// PostProcesing note uniform1 = image, uniform2 = depth buffer, rest is free
+
+// TODO:
+// add removing comments from shaders - Not inportant
+// add sound engine
+// make ssc - Not inportant
+// add Bullet Physics

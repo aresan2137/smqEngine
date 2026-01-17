@@ -4,7 +4,7 @@ namespace smq {
 	Component::Component() {
 	}
 
-	Object* Component::GetObject() {
+	Object* Component::GetParent() {
 		return i_object;
 	}
 

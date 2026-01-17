@@ -9,7 +9,6 @@
 #include "gtc/type_ptr.hpp"
 #include "gtx/quaternion.hpp"
 
-
 #include <cstring>
 
 namespace gtm {

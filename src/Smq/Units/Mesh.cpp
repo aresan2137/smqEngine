@@ -4,7 +4,6 @@
 
 namespace smq {
     Mesh::Mesh() {
-
     }
 
 	Mesh::Mesh(std::string Filename) {
@@ -61,7 +60,7 @@ namespace smq {
         Log("Mesh Created Sucesfully");
 	}
 	
-    Mesh::Mesh(std::vector<float> data, std::vector<unsigned int> indices) {
+    Mesh::Mesh(std::vector<float> data, std::vector<unsigned int> indices, std::vector<unsigned int> layout) {
         i_triangleCount = indices.size();
 
         glGenVertexArrays(1, &i_vao);
@@ -71,11 +70,18 @@ namespace smq {
         glBindBuffer(GL_ARRAY_BUFFER, i_meshID);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * data.size(), data.data(), GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        int bytes = 0;
+        int stride = 0;
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        for (int i = 0; i < layout.size(); i++) {
+            stride += layout[i];
+        }
+
+        for (int i = 0; i < layout.size(); i++) {
+            glEnableVertexAttribArray(i);
+            glVertexAttribPointer(i, layout[i], GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)bytes);
+            bytes += layout[i] * sizeof(float);
+        }
 
         glGenBuffers(1, &i_ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_ibo);
