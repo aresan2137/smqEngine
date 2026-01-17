@@ -1,8 +1,8 @@
 # smqEngine
 
 # How To Compile
-* install Required Liblaries: GLFW, GLAD, ImGui, GLM
-* put them in libs folder (create it if doesn't exists)
-* Modify cmake
-* Done
+* compile cmake
+* compile project
+
+# Demo
 * to fly araund in demo pres z 
