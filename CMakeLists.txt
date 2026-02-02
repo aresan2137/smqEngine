@@ -1,11 +1,15 @@
 ﻿cmake_minimum_required(VERSION 3.24)
-project(Game LANGUAGES CXX)
+project(SmqEngine LANGUAGES CXX)
 
-file(GLOB_RECURSE GAME_SOURCES "src/**.cpp")
-add_executable(Game ${GAME_SOURCES})
+file(GLOB_RECURSE SmqSOURCES "src/*.cpp")
+
+add_library(smq STATIC ${SmqSOURCES})
+
+target_include_directories(smq PUBLIC src) 
 
 # GLM
-target_include_directories(Game PRIVATE libs/glm-1.0.2/glm)
+add_library(glm INTERFACE)
+target_include_directories(glm INTERFACE libs/glm-1.0.2/glm)
 
 # GLAD
 add_library(glad STATIC libs/glad/src/glad.c)
@@ -15,7 +19,7 @@ target_include_directories(glad PUBLIC libs/glad/include)
 add_subdirectory(libs/glfw-3.4)
 
 # IMGUI
-add_library(imgui
+add_library(imgui STATIC
     libs/imgui-1.92.5/imgui.cpp
     libs/imgui-1.92.5/imgui_draw.cpp
     libs/imgui-1.92.5/imgui_tables.cpp
@@ -24,27 +28,33 @@ add_library(imgui
     libs/imgui-1.92.5/backends/imgui_impl_opengl3.cpp
 )
 
-target_include_directories(imgui PUBLIC
-    libs/imgui-1.92.5
+target_include_directories(imgui PUBLIC 
+    libs/imgui-1.92.5 
     libs/imgui-1.92.5/backends
 )
 
 target_link_libraries(imgui PUBLIC glfw)
 
-target_link_libraries(Game PRIVATE
+# bullet Phisics
+set(USE_MSVC_RUNTIME_LIBRARY_DLL ON CACHE BOOL "" FORCE)
+set(INSTALL_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
+set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+set(BUILD_CPU_DEMOS OFF CACHE BOOL "" FORCE)
+set(BUILD_BULLET3 OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(libs/bullet3)
+
+target_include_directories(smq PUBLIC libs/bullet3/src)
+
+target_link_libraries(smq PUBLIC
     glfw
-    opengl32
     glad
     imgui
+    glm
+    opengl32
+    BulletDynamics
+    BulletCollision
+    LinearMath
 )
-
-add_custom_command(
-    TARGET Game POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/src/resources
-        $<TARGET_FILE_DIR:Game>/resources
-)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release)

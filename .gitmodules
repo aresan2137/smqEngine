@@ -1,0 +1,12 @@
+[submodule "libs/glm-1.0.2"]
+	path = libs/glm-1.0.2
+	url = https://github.com/g-truc/glm.git
+[submodule "libs/glfw-3.4"]
+	path = libs/glfw-3.4
+	url = https://github.com/glfw/glfw.git
+[submodule "libs/imgui-1.92.5"]
+	path = libs/imgui-1.92.5
+	url = https://github.com/ocornut/imgui.git
+[submodule "libs/bullet3"]
+	path = libs/bullet3
+	url = https://github.com/bulletphysics/bullet3.git

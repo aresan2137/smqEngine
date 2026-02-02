@@ -1,0 +1,8 @@
+[
+  {
+    "directory": "/home/symsq/Pulpit/raylib_game",
+    "command": "C:\\Program Files\\Microsoft Visual Studio\\...\\cl.exe /I\"D:\\projekty\\Game\\out\\build\\x64-Debug\\_deps\\raylib-src\\src\" [...]",
+    "file": "/home/symsq/Pulpit/raylib_game/src/main.cpp",
+    "output": "CMakeFiles/raylib-game-template.dir/src/main.cpp.o"
+  }
+]
