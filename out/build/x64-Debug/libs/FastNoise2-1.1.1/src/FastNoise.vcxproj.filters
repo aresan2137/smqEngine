@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\FastNoise\FastNoise_C.cpp">
+      <Filter>FastNoise</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\FastNoise\Metadata.cpp">
+      <Filter>FastNoise</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\FastNoise\SmartNode.cpp">
+      <Filter>FastNoise</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\FastNoise.h">
+      <Filter>FastNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\FastNoise_C.h">
+      <Filter>FastNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Metadata.h">
+      <Filter>FastNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\FastNoise\Base64.h">
+      <Filter>FastNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\FastNoise\FastSIMD_Build.inl">
+      <Filter>FastNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\BasicGenerators.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\BasicGenerators.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Blends.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Blends.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Cellular.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Cellular.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarp.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarp.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarpFractal.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarpFractal.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarpSimplex.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\DomainWarpSimplex.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Fractal.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Fractal.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Generator.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Generator.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Modifiers.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Modifiers.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Perlin.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Perlin.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Simplex.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Simplex.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Utils.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Value.h">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Generators\Value.inl">
+      <Filter>FastNoise\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Utility\Config.h">
+      <Filter>FastNoise\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Utility\Export.h">
+      <Filter>FastNoise\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\include\FastNoise\Utility\SmartNode.h">
+      <Filter>FastNoise\Utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\kuba\Desktop\projekty2\bus\libs\FastNoise2-1.1.1\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-build\FastSIMD.dir\$(Configuration)\FastSIMD.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\libs\FastNoise2-1.1.1\src\FastSIMD_FastNoise.dir\$(Configuration)\FastSIMD_FastNoise_SSE2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\libs\FastNoise2-1.1.1\src\FastSIMD_FastNoise.dir\$(Configuration)\FastSIMD_FastNoise_SSE41.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\libs\FastNoise2-1.1.1\src\FastSIMD_FastNoise.dir\$(Configuration)\FastSIMD_FastNoise_AVX2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\libs\FastNoise2-1.1.1\src\FastSIMD_FastNoise.dir\$(Configuration)\FastSIMD_FastNoise_AVX512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="FastNoise">
+      <UniqueIdentifier>{CA16F83C-391C-3B8E-AB42-2CCACC1BA184}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FastNoise\Generators">
+      <UniqueIdentifier>{C3E227EE-806A-35A4-A80A-02DD3B6B4F73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FastNoise\Utility">
+      <UniqueIdentifier>{0D95E7C1-1E1B-32EB-AB70-9E0BC10B362F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{0E721DD5-220F-312D-BC5F-78D606490677}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

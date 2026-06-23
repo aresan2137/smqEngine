@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="src/FastNoise.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9d2b310b-1046-3e75-9744-eaa8492ad775">
+		<BuildDependency Project="../../_deps/fastsimd-build/FastSIMD.vcxproj"/>
+		<BuildDependency Project="src/FastSIMD_FastNoise.vcxproj"/>
+		<BuildDependency Project="../../ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="../../_deps/fastsimd-build/FastSIMD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="72eb6f16-9a4e-380f-a30e-2920d3b09a7a">
+		<BuildDependency Project="../../ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="src/FastSIMD_FastNoise.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="edb64d85-504e-3ef8-8d56-52721385c39f">
+		<BuildDependency Project="../../_deps/fastsimd-build/FastSIMD.vcxproj"/>
+		<BuildDependency Project="../../ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Folder Name="/CMakePredefinedTargets/">
+		<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="7270721f-1147-3038-8960-f565d44be5d7" DefaultStartup="true">
+			<BuildDependency Project="src/FastNoise.vcxproj"/>
+			<BuildDependency Project="../../_deps/fastsimd-build/FastSIMD.vcxproj"/>
+			<BuildDependency Project="src/FastSIMD_FastNoise.vcxproj"/>
+			<BuildDependency Project="../../ZERO_CHECK.vcxproj"/>
+		</Project>
+		<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1d65ca77-1cb4-374a-9ba4-4d7964ba0654">
+			<BuildDependency Project="ALL_BUILD.vcxproj"/>
+			<BuildDependency Project="../../ZERO_CHECK.vcxproj"/>
+			<Build Solution="Debug|*" Project="false"/>
+		</Project>
+		<Project Path="../../ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="08f14b6f-8cc5-3166-aac2-0a28df21ea47"/>
+	</Folder>
+</Solution>

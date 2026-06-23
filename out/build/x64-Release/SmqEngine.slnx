@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Release"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="libs/FastNoise2-1.1.1/src/FastNoise.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b37bd7c7-fc42-3a03-80d3-ea013c50aa3a">
+		<BuildDependency Project="_deps/fastsimd-build/FastSIMD.vcxproj"/>
+		<BuildDependency Project="libs/FastNoise2-1.1.1/src/FastSIMD_FastNoise.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="_deps/fastsimd-build/FastSIMD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9171f731-f49d-3bbf-8ddd-16ed9a0c4940">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="libs/FastNoise2-1.1.1/src/FastSIMD_FastNoise.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="110420ca-8c45-3e5d-a11c-54aa2ae17c86">
+		<BuildDependency Project="_deps/fastsimd-build/FastSIMD.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="glad.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="56bad245-d5f8-38e6-89e8-1788e4c4efb7">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="imgui.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d5a33aba-54e1-3cdc-9091-6f86e6619bf9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="glad.vcxproj"/>
+		<BuildDependency Project="libs/glfw-3.4/src/glfw.vcxproj"/>
+	</Project>
+	<Project Path="libs/miniz-3.1.1/miniz.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="aabf5082-0cfc-399c-84de-699dff8a2db9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="smq.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="caaf4ec4-33ed-36a5-bc28-afb9f1b2e635">
+		<BuildDependency Project="libs/FastNoise2-1.1.1/src/FastNoise.vcxproj"/>
+		<BuildDependency Project="_deps/fastsimd-build/FastSIMD.vcxproj"/>
+		<BuildDependency Project="libs/FastNoise2-1.1.1/src/FastSIMD_FastNoise.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="glad.vcxproj"/>
+		<BuildDependency Project="libs/glfw-3.4/src/glfw.vcxproj"/>
+		<BuildDependency Project="imgui.vcxproj"/>
+		<BuildDependency Project="libs/miniz-3.1.1/miniz.vcxproj"/>
+	</Project>
+	<Folder Name="/CMakePredefinedTargets/">
+		<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3d81426c-2ab6-3aa4-8fb4-1b9676c653e1" DefaultStartup="true">
+			<BuildDependency Project="libs/FastNoise2-1.1.1/src/FastNoise.vcxproj"/>
+			<BuildDependency Project="_deps/fastsimd-build/FastSIMD.vcxproj"/>
+			<BuildDependency Project="libs/FastNoise2-1.1.1/src/FastSIMD_FastNoise.vcxproj"/>
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<BuildDependency Project="glad.vcxproj"/>
+			<BuildDependency Project="libs/glfw-3.4/src/glfw.vcxproj"/>
+			<BuildDependency Project="imgui.vcxproj"/>
+			<BuildDependency Project="libs/miniz-3.1.1/miniz.vcxproj"/>
+			<BuildDependency Project="smq.vcxproj"/>
+		</Project>
+		<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4bec824b-3668-398b-9ec7-258f35533c71">
+			<BuildDependency Project="ALL_BUILD.vcxproj"/>
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Release|*" Project="false"/>
+		</Project>
+		<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="15d57edf-0f11-3730-8310-9a4adc23ceca"/>
+	</Folder>
+	<Folder Name="/GLFW3/">
+		<Project Path="libs/glfw-3.4/src/glfw.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="2540759b-390e-34c3-8e19-c689824048d5">
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		</Project>
+		<Project Path="libs/glfw-3.4/uninstall.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8569dacb-6b4f-3ed9-ad82-7c3b927f38c9">
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Release|*" Project="false"/>
+		</Project>
+		<Project Path="libs/glfw-3.4/src/update_mappings.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="026e8e5a-c2b3-3e1c-a5e7-c8cd9ef598b2">
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Release|*" Project="false"/>
+		</Project>
+	</Folder>
+</Solution>

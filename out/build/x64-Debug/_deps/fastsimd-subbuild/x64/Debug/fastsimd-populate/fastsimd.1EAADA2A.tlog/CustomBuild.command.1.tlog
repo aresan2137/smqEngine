@@ -1,0 +1,150 @@
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/tmp/fastsimd-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/tmp/fastsimd-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/tmp/fastsimd-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-BUILD.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\4347D21E8E67656E158E5325C6E87A18\FASTSIMD-POPULATE-TEST.RULE
+setlocal
+cd C:\Users\kuba\Desktop\projekty2\bus\out\build\x64-Debug\_deps\fastsimd-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\2B446E8F12721878854053765DA6A232\FASTSIMD-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E make_directory C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/CMakeFiles/Debug/fastsimd-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/fastsimd-populate-prefix/src/fastsimd-populate-stamp/Debug/fastsimd-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKEFILES\33B61405EB4EC4113B7EA1C7DAA79831\FASTSIMD-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\KUBA\DESKTOP\PROJEKTY2\BUS\OUT\BUILD\X64-DEBUG\_DEPS\FASTSIMD-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild -BC:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild --check-stamp-file C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Debug/_deps/fastsimd-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

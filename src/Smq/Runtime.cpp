@@ -1,81 +1,37 @@
-﻿#include "../Include.h"
+#include "../smq.h"
 
-#include <thread>
-#include <atomic>
-#include <mutex>
+void Runtime::StartRuntime() {
+	Scene* currentScene = scenes[0];
 
-void StartObject(smq::Object* object) {
+	_inputWindow = window.window;
 
-    const std::vector<smq::Component*>& components = object->GetAllComponents();
-    for (int i = 0; i < components.size(); i++) {
-        components[i]->Start();
-    }
+	for (size_t i = 0; i < currentScene->systems.size(); i++) {
+		currentScene->systems[i]->Start(currentScene);
+	}
 
-    const std::vector<smq::Object*>* kids = object->GetAllChildren();
-    for (int i = 0; i < kids->size(); i++) {
-        StartObject(kids->at(i));
-    }
-}
+    double lastTime = glfwGetTime();
 
-void UpdateObject(smq::Object* object, float Delta) {
+	while (!glfwWindowShouldClose(window.window)) {
 
-    const std::vector<smq::Component*>& components = object->GetAllComponents();
-    for (int i = 0; i < components.size(); i++) {
-        components[i]->Update(Delta);
-    }
+        double now = glfwGetTime();
+        deltaTime = (float)(now - lastTime);
+        lastTime = now;
 
-    const std::vector<smq::Object*>* kids = object->GetAllChildren();
-    for (int i = 0; i < kids->size(); i++) {
-        UpdateObject(kids->at(i), Delta);
-    }
-}
+        glfwPollEvents();
 
-float Time = 0.0f;
-float TimePre = 0.0f;
-
-smq::Physics phs;
-
-namespace smq {
-    void Engine::StartRuntime() {
-
-        StartObject(currentScene->rootObject);
-
-		phs.Start();
-
-
-        while (!glfwWindowShouldClose(i_GlfwWindow)) {
-            glfwSwapBuffers(i_GlfwWindow);
-    
-            InputUpdate(i_ImIo);
-            glfwPollEvents();
-            
-            DrawScene();
-
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            Time = (float)glfwGetTime();
-            float Delta = Time - TimePre;
-            TimePre = Time;
-            UpdateObject(currentScene->rootObject, Delta);
-
-            glfwGetWindowSize(i_GlfwWindow, &i_window.size.x, &i_window.size.y);
-
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        for (auto sys : currentScene->systems) {
+            sys->EarlyUpdate(currentScene);
         }
-        phs.Stop();
-    }
 
-    void Engine::SetScene(smq::Scene* scene) {
-        currentScene = scene;
-    }
-    smq::Scene* Engine::GetScene() {
-        return currentScene;
-    }
-    void Engine::SetPostProcesingMaterial(Material* material) {
-        i_post = material;
+        for (auto sys : currentScene->systems) {
+            sys->Update(currentScene);
+        }
+
+        for (auto sys : currentScene->systems) {
+            sys->LateUpdate(currentScene);
+        }
+
+        for (auto& [key, val] : _inputPrevious)
+            val = _getRaw((Key)key);
     }
 }
-

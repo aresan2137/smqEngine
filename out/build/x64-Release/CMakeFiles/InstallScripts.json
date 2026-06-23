@@ -1,0 +1,15 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/glfw-3.4/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/glfw-3.4/src/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/glfw-3.4/docs/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/FastNoise2-1.1.1/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/FastNoise2-1.1.1/src/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-build/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-build/dispatch/cmake_install.cmake",
+		"C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/libs/miniz-3.1.1/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

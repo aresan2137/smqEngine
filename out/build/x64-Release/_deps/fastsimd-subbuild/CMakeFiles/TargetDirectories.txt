@@ -1,0 +1,3 @@
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/fastsimd-populate.dir
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/ALL_BUILD.dir
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/ZERO_CHECK.dir

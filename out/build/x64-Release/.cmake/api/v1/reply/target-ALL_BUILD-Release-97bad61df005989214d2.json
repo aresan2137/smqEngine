@@ -1,0 +1,93 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "imgui::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "smq::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "glfw::@ad9a86069fbae5e790e5"
+		},
+		{
+			"id" : "glad::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "FastSIMD::@6a824029d8a23c0cb0e8"
+		},
+		{
+			"id" : "miniz::@cb65900a719adddb8202"
+		},
+		{
+			"id" : "FastNoise::@487c7ce751d818a249d8"
+		},
+		{
+			"id" : "FastSIMD_FastNoise::@487c7ce751d818a249d8"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "CMakePredefinedTargets"
+	},
+	"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+	"isGeneratorProvided" : true,
+	"name" : "ALL_BUILD",
+	"orderDependencies" : 
+	[
+		{
+			"id" : "imgui::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "smq::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "glfw::@ad9a86069fbae5e790e5"
+		},
+		{
+			"id" : "glad::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "FastSIMD::@6a824029d8a23c0cb0e8"
+		},
+		{
+			"id" : "miniz::@cb65900a719adddb8202"
+		},
+		{
+			"id" : "FastNoise::@487c7ce751d818a249d8"
+		},
+		{
+			"id" : "FastSIMD_FastNoise::@487c7ce751d818a249d8"
+		}
+	],
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

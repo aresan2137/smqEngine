@@ -1,0 +1,14 @@
+# Target labels
+ fastsimd-populate
+# Source files and their labels
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/fastsimd-populate
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/41f6581bbce7956f082e1f465ace93a2/fastsimd-populate.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/fa82426a3bc64e4d0a8d79fbe2372085/fastsimd-populate-complete.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-build.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-configure.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-download.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-install.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-mkdir.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-patch.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-test.rule
+C:/Users/kuba/Desktop/projekty2/bus/out/build/x64-Release/_deps/fastsimd-subbuild/CMakeFiles/79a4e00e0844d64c9913d8fcc2f31620/fastsimd-populate-update.rule
