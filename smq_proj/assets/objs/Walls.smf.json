@@ -1,0 +1,25 @@
+{
+  "vertex_count": 678,
+  "index_count": 0,
+  "layout": {
+    "array_stride": 32,
+    "step_mode": "Vertex",
+    "attributes": [
+      {
+        "shader_location": 0,
+        "format": "Float32x3",
+        "offset": 0
+      },
+      {
+        "shader_location": 1,
+        "format": "Float32x2",
+        "offset": 12
+      },
+      {
+        "shader_location": 2,
+        "format": "Float32x3",
+        "offset": 20
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "width": 384,
+  "height": 216,
+  "format": "",
+  "color_attachments": [
+    {
+      "format": "Rgba8Unorm",
+      "usage": [
+        "RENDER_ATTACHMENT",
+        "TEXTURE_BINDING"
+      ]
+    },
+    {
+      "format": "Rg16Float",
+      "usage": [
+        "RENDER_ATTACHMENT",
+        "TEXTURE_BINDING"
+      ]
+    }
+  ],
+  "depth_format": "Depth32Float"
+}

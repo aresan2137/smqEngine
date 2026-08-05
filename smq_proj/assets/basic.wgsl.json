@@ -1,0 +1,7 @@
+{
+  "atachments": [
+    "Rgba8Unorm",
+    "Rg16Float"
+  ],
+  "culling": "Back"
+}
