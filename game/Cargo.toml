@@ -5,6 +5,7 @@ edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+name = "smq_game_lib"
 path = "src/main.rs"
 
 [dependencies]
@@ -36,3 +37,7 @@ wasm-opt = false
 
 [package.metadata.wasm-pack.profile.dev]
 wasm-opt = false
+
+[features]
+default = []
+editor = []

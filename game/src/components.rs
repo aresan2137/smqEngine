@@ -1,11 +1,8 @@
 use glam::*;
 use bevy_ecs::prelude::*;
-use wgpu::*;
 use std::{collections::HashSet, time::Duration};
 use winit::{event::KeyEvent, keyboard::{KeyCode}, window::Window};
 use web_time::Instant;
-
-use crate::MeshID;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Resource)]
@@ -116,19 +113,4 @@ impl InputState {
         self.keys_released.clear();
         self.mouse_delta = (0.0, 0.0);
     }
-}
-
-#[derive(Component)]
-pub struct Position3D {
-    pub position: Vec3,
-    pub rotation: Quat,
-    pub size: Vec3,
-    pub mesh: MeshID
-}
-
-#[derive(Component)]
-pub struct PointLight {
-    pub position: Vec3,
-    pub color: Color,
-    pub power: f32
 }

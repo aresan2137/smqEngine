@@ -1,0 +1,28 @@
+[package]
+name = "smq_editor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# IMPORt TWOJEGO SILNIKA:
+smq_engine = { path = "../engine" }
+
+# Rzeczy potrzebne tylko edytorowi:
+winit = "0.30.0"
+glam = { version = "0.29", features = ["bytemuck"] }
+bevy_ecs = "0.19"
+wgpu = "24.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+gltf = "1.4"
+image = { version = "0.25", default-features = false, features = ["png"] }
+bytemuck = { version = "1.21", features = ["derive"] }
+kira = { version = "0.10", features = ["wav", "mp3"] }
+pollster = "0.4.0"
+web-time = "1.1"
+egui = "0.31"
+egui_dock = { version = "0.16", features = ["serde"] }
+egui-winit = "0.31"
+egui-wgpu = "0.31"
+trash = "3.3"
+log = "0.4"

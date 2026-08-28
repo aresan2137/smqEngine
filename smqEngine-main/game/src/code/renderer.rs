@@ -166,19 +166,11 @@ impl Assets {
             render_texture.get_depth_binding()
         ]);
 
-        #[cfg(not(target_arch = "wasm32"))]
         let comp = Material::compute(&context, include_str!("../../../smq_proj/assets/compute.wgsl"), &[
             &comp_bind_group.bind_group_layout,
             &comp_binding_2.bind_group_layout,
             &mesh_bind_group.bind_group_layout
         ]);    
-
-        #[cfg(target_arch = "wasm32")]
-        let comp = Material::compute(&context, include_str!("../../../smq_proj/assets/compute_web.wgsl"), &[
-            &comp_bind_group.bind_group_layout,
-            &comp_binding_2.bind_group_layout,
-            &mesh_bind_group.bind_group_layout
-        ]);  
 
         let blit_bind_group = BindGroupS::from_bindings(&context, vec![
             blit_render_texture.attachments[0].get_texture_binding(),

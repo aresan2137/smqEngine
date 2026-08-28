@@ -1,29 +1,15 @@
-pub mod logger;
-
-pub mod json_helper;
+use std::sync::OnceLock;
 
 mod context;
 pub use context::*;
 
-mod texture;
-pub use texture::*;
+mod units;
+pub use units::*;
 
-mod material;
-pub use material::*;
+pub mod logger;
 
-mod ubo;
-pub use ubo::*;
-
-mod rendertexture;
-pub use rendertexture::*;
-
-mod mesh;
-pub use mesh::*;
-
-mod bind_group;
-pub use bind_group::*;
-
-use std::sync::OnceLock;
+mod ssf;
+pub use ssf::*;
 
 pub fn ui() -> egui::Context {
     static CTX: OnceLock<egui::Context> = OnceLock::new();

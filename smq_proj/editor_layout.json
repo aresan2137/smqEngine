@@ -11,28 +11,28 @@
                   "y": 30.0
                 },
                 "max": {
-                  "x": 1272.0,
-                  "y": 712.0
+                  "x": 1912.0,
+                  "y": 1001.0
                 }
               },
-              "fraction": 0.74588585,
+              "fraction": 0.77001274,
               "fully_collapsed": false,
               "collapsed_leaf_count": 0
             }
           },
           {
-            "Vertical": {
+            "Horizontal": {
               "rect": {
                 "min": {
                   "x": 8.0,
                   "y": 30.0
                 },
                 "max": {
-                  "x": 950.0,
-                  "y": 712.0
+                  "x": 1474.0,
+                  "y": 1001.0
                 }
               },
-              "fraction": 0.5,
+              "fraction": 0.2137718,
               "fully_collapsed": false,
               "collapsed_leaf_count": 0
             }
@@ -41,22 +41,22 @@
             "Leaf": {
               "rect": {
                 "min": {
-                  "x": 951.0,
+                  "x": 1475.0,
                   "y": 30.0
                 },
                 "max": {
-                  "x": 1272.0,
-                  "y": 712.0
+                  "x": 1912.0,
+                  "y": 1001.0
                 }
               },
               "viewport": {
                 "min": {
-                  "x": 951.0,
+                  "x": 1475.0,
                   "y": 54.0
                 },
                 "max": {
-                  "x": 1272.0,
-                  "y": 712.0
+                  "x": 1912.0,
+                  "y": 1001.0
                 }
               },
               "tabs": [
@@ -75,8 +75,8 @@
                   "y": 30.0
                 },
                 "max": {
-                  "x": 950.0,
-                  "y": 371.0
+                  "x": 321.0,
+                  "y": 1001.0
                 }
               },
               "viewport": {
@@ -85,12 +85,63 @@
                   "y": 54.0
                 },
                 "max": {
-                  "x": 950.0,
-                  "y": 371.0
+                  "x": 321.0,
+                  "y": 1001.0
                 }
               },
               "tabs": [
-                "Output"
+                "SceneView"
+              ],
+              "active": 0,
+              "scroll": 0.0,
+              "collapsed": false
+            }
+          },
+          {
+            "Vertical": {
+              "rect": {
+                "min": {
+                  "x": 322.0,
+                  "y": 30.0
+                },
+                "max": {
+                  "x": 1474.0,
+                  "y": 1001.0
+                }
+              },
+              "fraction": 0.700824,
+              "fully_collapsed": false,
+              "collapsed_leaf_count": 0
+            }
+          },
+          "Empty",
+          "Empty",
+          "Empty",
+          "Empty",
+          {
+            "Leaf": {
+              "rect": {
+                "min": {
+                  "x": 322.0,
+                  "y": 30.0
+                },
+                "max": {
+                  "x": 1474.0,
+                  "y": 710.0
+                }
+              },
+              "viewport": {
+                "min": {
+                  "x": 322.0,
+                  "y": 54.0
+                },
+                "max": {
+                  "x": 1474.0,
+                  "y": 710.0
+                }
+              },
+              "tabs": [
+                "Viewport"
               ],
               "active": 0,
               "scroll": 0.0,
@@ -101,26 +152,27 @@
             "Leaf": {
               "rect": {
                 "min": {
-                  "x": 8.0,
-                  "y": 372.0
+                  "x": 322.0,
+                  "y": 711.0
                 },
                 "max": {
-                  "x": 950.0,
-                  "y": 712.0
+                  "x": 1474.0,
+                  "y": 1001.0
                 }
               },
               "viewport": {
                 "min": {
-                  "x": 8.0,
-                  "y": 396.0
+                  "x": 322.0,
+                  "y": 735.0
                 },
                 "max": {
-                  "x": 950.0,
-                  "y": 712.0
+                  "x": 1474.0,
+                  "y": 1001.0
                 }
               },
               "tabs": [
-                "Assets"
+                "Assets",
+                "Settings"
               ],
               "active": 0,
               "scroll": 0.0,
@@ -128,9 +180,11 @@
             }
           },
           "Empty",
+          "Empty",
+          "Empty",
           "Empty"
         ],
-        "focused_node": 2,
+        "focused_node": 9,
         "collapsed": false,
         "collapsed_leaf_count": 0
       }

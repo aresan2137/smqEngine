@@ -1,0 +1,1 @@
+{"bindgroups":[null,null,null,null],"culling":"None","is_full":true,"write_depth":true,"depth_compare":"Less","blend_mode":"Opaque","topology":"TriangleList","is_compute":false}

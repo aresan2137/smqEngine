@@ -23,6 +23,12 @@ web-time = "1.1"
 egui = "0.31"
 egui_dock = { version = "0.16", features = ["serde"] }
 egui-winit = "0.31"
+meval = "0.2"
+rfd = "0.14"
 egui-wgpu = "0.31"
+uuid = { version = "1.7", features = ["v4", "serde"] }
 trash = "3.3"
 log = "0.4"
+walkdir = "2.0"
+bincode = "1.3"
+flate2 = "1.0"

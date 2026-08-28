@@ -1,0 +1,1 @@
+{"width":1280,"height":720,"attachments":[{"format":"Rgba8Unorm","usages_COPY_DST":false,"usages_COPY_SRC":false,"usages_RENDER_ATTACHMENT":false,"usages_STORAGE_ATOMIC":false,"usages_STORAGE_BINDING":true,"usages_TEXTURE_BINDING":true}],"depth_attachment":"Depth32Float"}

@@ -1,7 +1,6 @@
 use bevy_ecs::prelude::*;
 use glam::*;
 
-use wgpu::Color;
 use winit::{event::{Event, WindowEvent}, keyboard::{PhysicalKey}};
 
 use smq_engine::*;
@@ -12,40 +11,30 @@ use components::*;
 mod code;
 use code::*;
 
-mod map;
+mod renderer;
+
+mod gen_bake;
+
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+use renderer::*;
+
+pub fn fps_logger(time: Res<Delta>) {
+    egui::Window::new("FPS").default_width(400.0).show(&ui(), |ui| {
+        ui.label(format!("fps: {}", 1.0/time.delta));
+    });
+}
 
 #[allow(unused)]
 fn main() {
     pollster::block_on(run());
 }
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-
-use crate::{code::free_cam::f11_system, map::save_aabbs};
-
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MeshID {
-    Wall = 0,
-    Floor = 1,
-    Cube = 2,
-    Cart = 3
-}
-
-pub fn fps_logger(time: Res<Delta>) {
-    egui::Window::new("FPS")
-        .default_width(400.0)
-        .show(&ui(), |ui| {
-            ui.label(format!("fps: {}", 1.0/time.delta));
-        });
-
-}
-
 #[allow(deprecated)]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
-    let _ = logger::init();
+    logger::init();
 
     let (mut context, event_loop) = Context::new().await;
     
@@ -54,36 +43,23 @@ pub async fn run() {
     world.insert_resource(InputState::default());
 
     let mut schedule = Schedule::default();
-    schedule.add_systems(free_cam::free_camera_system);
-    //schedule.add_systems(movment::player_movment_system);
-    schedule.add_systems(movment::move_player_light);
+    schedule.add_systems(free_camera_system);
     schedule.add_systems(fps_logger);
 
-    cart_system::cart_system_start(&mut world, &mut schedule);
+    world.spawn(
+        FreeCamera {
+            position: Vec3::ZERO,
+            pitch: 0.0,
+            yaw: 0.0,
+            speed: 5.0,
+            sensitivity: 0.3,
+            is_controlling: false
+        }
+    );
 
-    map::create_map(&mut world, &mut schedule);
+    let mut is_minimized = false;
 
-    world.spawn((free_cam::FreeCamera {
-        position: Vec3::new(0.0, 1.2, 0.0),
-        pitch: 0.0,
-        yaw: 0.0,
-        speed: 6.0, // 2.0
-        sensitivity: 0.3,
-        is_controlling: false,
-    }
-    , PointLight {
-        position: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
-        color: Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0},
-        power: 50.0 //1.0
-    }
-));
-
-    let mut assets = renderer::Assets::new(&context, vec![
-        include_bytes!("../../smq_proj/assets/objs/Walls.smf") as &[u8],
-        include_bytes!("../../smq_proj/assets/objs/Floor.smf") as &[u8],
-        include_bytes!("../../smq_proj/assets/objs/Cube.smf") as &[u8],
-        include_bytes!("../../smq_proj/assets/objs/Cart.smf") as &[u8]
-    ]);
+    let mut renderer = Renderer::new(&mut context);
 
     event_loop.run(move |event, elwt| {
         match event {
@@ -108,15 +84,13 @@ pub async fn run() {
                         f11_system(&world, &context.window);
                     }
                     WindowEvent::CloseRequested => {
-                        save_aabbs(&mut world);
-
                         elwt.exit();
                     }
                     WindowEvent::Resized(physical_size) => {
                         if physical_size.width == 0 || physical_size.height == 0 {
-                            assets.is_minimized = true;
+                            is_minimized = true;
                         } else {
-                            assets.is_minimized = false;
+                            is_minimized = false;
                             context.resize(*physical_size);
                         }
                     }
@@ -127,7 +101,11 @@ pub async fn run() {
 
                         schedule.run(&mut world);
 
-                        assets.draw(&mut context, &mut world);
+                        let full_output = context.end_egui_record();
+
+                        if is_minimized { return; }
+
+                        renderer.draw(&mut context, &mut world, full_output);
 
                         world.get_resource_mut::<InputState>().expect("input not found").end_frame();
                     }

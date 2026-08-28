@@ -1,15 +1,24 @@
+#![windows_subsystem = "windows"]
+
 use bevy_ecs::prelude::*;
+use egui::TextureFilter;
 use glam::*;
 
+use wgpu::FilterMode;
 use winit::{event::{Event, WindowEvent}, keyboard::{PhysicalKey}};
-
-use smq_engine::*;
 
 mod components;
 use components::*;
 
+use smq_engine::*;
+
+use crate::{editor::{editor_set_viewport_texture_id, editor_update, save_editor_layout}, free_cam::{FreeCamera, free_camera_system}};
+
 mod editor;
-use editor::*;
+mod bake;
+mod renderer;
+pub mod gen_bake;
+pub mod free_cam;
 
 fn main() {
     pollster::block_on(run());
@@ -25,7 +34,23 @@ pub async fn run() {
     world.insert_resource(Delta::new(&context.window));
     world.insert_resource(InputState::default());
 
+    let mut schedule = Schedule::default();
+    schedule.add_systems(free_camera_system);
+
     let mut is_minimized = false;
+
+    let mut renderer = renderer::Renderer::new(&mut context);
+
+    world.spawn(FreeCamera {
+        position: Vec3::ZERO,
+        pitch: 0.0,
+        yaw: 0.0,
+        speed: 5.0,
+        sensitivity: 0.3,
+        is_controlling: false
+    });
+
+    editor_set_viewport_texture_id(&mut world, renderer.gen_assets.renderer_main_renderTexture.create_egui_texture_id(&mut context, 0, FilterMode::Linear));
 
     event_loop.run(move |event, elwt| {
         match event {
@@ -44,10 +69,10 @@ pub async fn run() {
                 match event_window {
                     WindowEvent::KeyboardInput { event, .. } => {
                         if let PhysicalKey::Code(keycode) = event.physical_key {
-                            world.get_resource_mut::<InputState>().expect("input not found").on_input(event, keycode, &context.window);
+                            world.get_resource_mut::<InputState>().expect("input not found").on_input(event, keycode);
                         }
                     }
-                    WindowEvent::CloseRequested => {           
+                    WindowEvent::CloseRequested => {
                         save_editor_layout(&world);
 
                         elwt.exit();
@@ -65,6 +90,7 @@ pub async fn run() {
 
                         world.get_resource_mut::<Delta>().expect("delta not found").update_delta();
 
+                        schedule.run(&mut world);
 
                         editor_update(&mut world);
 
@@ -74,12 +100,9 @@ pub async fn run() {
                             return; 
                         }
 
-                        if let Some(mut frame) = context.start_frame() {
-                                
-                            context.draw_egui(&mut frame, full_output);
+                        renderer.draw(&mut context, &mut world, full_output);
 
-                            context.end_frame(frame); 
-                        }
+                        world.get_resource_mut::<InputState>().expect("input nie istnieje").end_frame();                        
                     }
                     _ => {}
                 }
