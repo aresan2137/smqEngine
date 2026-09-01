@@ -9,11 +9,11 @@ use wgpu::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata0Ubo {
+pub struct UboData0 {
     pub proj: Mat4,
 }
 
-impl Default for RendererUbodata0Ubo {
+impl Default for UboData0 {
     fn default() -> Self {
         Self {
             proj: Mat4::IDENTITY,
@@ -23,11 +23,11 @@ impl Default for RendererUbodata0Ubo {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata1Ubo {
+pub struct UboData1 {
     pub view: Mat4,
 }
 
-impl Default for RendererUbodata1Ubo {
+impl Default for UboData1 {
     fn default() -> Self {
         Self {
             view: Mat4::IDENTITY,
@@ -37,11 +37,11 @@ impl Default for RendererUbodata1Ubo {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata2Ubo {
+pub struct UboData2 {
     pub model: Mat4,
 }
 
-impl Default for RendererUbodata2Ubo {
+impl Default for UboData2 {
     fn default() -> Self {
         Self {
             model: Mat4::IDENTITY,
@@ -50,18 +50,21 @@ impl Default for RendererUbodata2Ubo {
 }
 
 pub struct GenAssets {
+    pub ubodata0: Ubo<UboData0>,
+    pub ubodata1: Ubo<UboData1>,
+    pub ubodata2: Ubo<UboData2>,
     pub renderer_main_renderTexture: RenderTexture,
-    pub renderer_ubodata0_ubo: Ubo<RendererUbodata0Ubo>,
-    pub renderer_ubodata1_ubo: Ubo<RendererUbodata1Ubo>,
-    pub renderer_ubodata2_ubo: Ubo<RendererUbodata2Ubo>,
 }
 
 impl GenAssets {
     pub fn init_gen_assets(context: &Context) -> Self {
+        let mut ubodata0 = Ubo::new(context, UboData0::default());
+        let mut ubodata1 = Ubo::new(context, UboData1::default());
+        let mut ubodata2 = Ubo::new(context, UboData2::default());
         let renderer_main_renderTexture = RenderTexture::new(
             context,
-            1280,
-            720,
+            7680,
+            4320,
             &[(
                 TextureFormat::Rgba8Unorm,
                 TextureUsages::RENDER_ATTACHMENT
@@ -75,15 +78,12 @@ impl GenAssets {
                 Some("renderer_main_renderTexture_depth"),
             )),
         );
-        let mut renderer_ubodata0_ubo = Ubo::new(context, RendererUbodata0Ubo::default());
-        let mut renderer_ubodata1_ubo = Ubo::new(context, RendererUbodata1Ubo::default());
-        let mut renderer_ubodata2_ubo = Ubo::new(context, RendererUbodata2Ubo::default());
 
         return Self {
+            ubodata0,
+            ubodata1,
+            ubodata2,
             renderer_main_renderTexture,
-            renderer_ubodata0_ubo,
-            renderer_ubodata1_ubo,
-            renderer_ubodata2_ubo,
         };
     }
 }

@@ -1,6 +1,7 @@
 use glam::*;
 use bevy_ecs::prelude::*;
-use std::{collections::HashSet, time::Duration};
+use std::{collections::HashSet};
+use web_time::*;
 use winit::{event::KeyEvent, keyboard::{KeyCode}, window::Window};
 use web_time::Instant;
 

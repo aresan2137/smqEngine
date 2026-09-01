@@ -21,10 +21,10 @@ impl Renderer {
     pub fn new(context: &mut Context) -> Self {
         let mut gen_assets = gen_bake::GenAssets::init_gen_assets(context);
 
-        gen_assets.renderer_ubodata0_ubo.data.proj = Mat4::perspective_rh((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
+        gen_assets.ubodata0.data.proj = Mat4::perspective_rh((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
 
-        gen_assets.renderer_ubodata0_ubo.upload_data(context);
-        gen_assets.renderer_ubodata2_ubo.upload_data(context);
+        gen_assets.ubodata0.upload_data(context);
+        gen_assets.ubodata2.upload_data(context);
 
         let mesh1 = Mesh::new(
             context, include_bytes!("../../../smq_proj/data/file/mesh/Suzanne.smf"), 
@@ -36,15 +36,15 @@ impl Renderer {
         let mat_module1 = Material::crate_shader_module(context, include_str!("../../../smq_proj/data/file/renderer/shaders/base.wgsl"));
 
         let bind_group0 = BindGroupS::new(context, &[
-            gen_assets.renderer_ubodata0_ubo.get_binding(ShaderStages::VERTEX)
+            gen_assets.ubodata0.get_binding(ShaderStages::VERTEX)
         ], None);
 
         let bind_group1 = BindGroupS::new(context, &[
-            gen_assets.renderer_ubodata1_ubo.get_binding(ShaderStages::VERTEX)
+            gen_assets.ubodata1.get_binding(ShaderStages::VERTEX)
         ], None);
 
         let bind_group2 = BindGroupS::new(context, &[
-            gen_assets.renderer_ubodata2_ubo.get_binding(ShaderStages::VERTEX)
+            gen_assets.ubodata2.get_binding(ShaderStages::VERTEX)
         ], None);
 
         let mat1 = Material::new(context, Some(Face::Back), None, &gen_assets.renderer_main_renderTexture, mat_module1, vert_layout, CompareFunction::Less, [
@@ -86,8 +86,8 @@ impl Renderer {
 
             let view = Mat4::look_to_lh(cam.position, forward, up);
 
-            self.gen_assets.renderer_ubodata1_ubo.data.view = view;
-            self.gen_assets.renderer_ubodata1_ubo.upload_data(context);
+            self.gen_assets.ubodata1.data.view = view;
+            self.gen_assets.ubodata1.upload_data(context);
         }
     } 
 

@@ -43,7 +43,6 @@ impl Context<'_> {
             
             canvas.set_width(1280);
             canvas.set_height(720);
-
             canvas.set_attribute("tabindex", "0").unwrap();
 
             let web_window = web_sys::window().unwrap();
