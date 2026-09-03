@@ -1,5 +1,7 @@
 use std::{fs, path::{Path, PathBuf}};
 
+use bevy_ecs::world::World;
+use smq_engine::save_custom_ssf;
 use walkdir::WalkDir;
 use wgpu::naga::valid::{Validator, Capabilities, ValidationFlags};
 
@@ -8,9 +10,9 @@ use std::error::Error;
 mod wgsl_anaizer;
 use wgsl_anaizer::*;
 
-use crate::editor::inspector::{RenderTextureJson, process_common_file_descriptor};
+use crate::editor::{EditorState, inspector::{RenderTextureJson, TextureJson, process_common_file_descriptor}};
 
-pub fn bake() -> Result<(), Box<dyn Error>> {
+pub fn bake(state: &EditorState) -> Result<(), Box<dyn Error>> {
     let mut files: Vec<PathBuf> = Vec::new();
     let mut struct_code= "".to_string();
     let mut fn_code= "".to_string();
@@ -21,193 +23,111 @@ pub fn bake() -> Result<(), Box<dyn Error>> {
 
     let mut analisys = Vec::new();
 
+    let mut iterer = Vec::new();
+
     for entry in WalkDir::new("smq_proj/assets").into_iter().filter_map(|e| e.ok()) {
         if entry.path().is_file() {
             let ext = entry.path().extension().and_then(|s| s.to_str()).unwrap_or("");
             
-            match ext {
-                "wgsl" => {
-                    let (file_path, _) = process_common_file_descriptor(&entry.path().to_path_buf());
-                    
-                    analisys.push(analize_wgsl_file(&file_path, &mut validator)?);
-                },
-                _ => {}
-            }
+            iterer.push((entry.path().to_path_buf(), ext.to_string()));
+        }
+    }
+
+    for (path, ext) in &iterer {
+        if ext == "wgsl" {
+            let (file_path, _) = process_common_file_descriptor(&path);
+            
+            analisys.push(analize_wgsl_file(&file_path, &mut validator)?);
         }
     }
 
     bake_auto_ubos(&analisys, &mut struct_code, &mut fn_code, &mut ret_code, &mut ret_struct_code)?;
 
-    for entry in WalkDir::new("smq_proj/assets").into_iter().filter_map(|e| e.ok()) {
-        if entry.path().is_file() {
-            let path = entry.path();
-            let var_name = path_to_var(path);
-            let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+    for (path, ext) in &iterer {
+        let var_name = path_to_var(&path);
 
-            match ext {
-                // "png" => {
-                //     let (file_path, json_path) = process_common_file_descriptor(&entry.path().to_path_buf());
+        match ext.as_str() {
+            "png" => {
+                let (file_path, json_path) = process_common_file_descriptor(&path);
 
-                //     let json_content = fs::read_to_string(&json_path)?;
-                //     let texture_json: TextureJson = serde_json::from_str(&json_content).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+                let json_content = fs::read_to_string(&json_path)?;
+                let texture_json: TextureJson = serde_json::from_str(&json_content)?;
 
-                //     fn_code += &format!("\n    let {} = TextureS::new(context, ssf_data[{}], {}, {}, {}, {}, Some(\"{}\"));", 
-                //         var_name, files.len() as i32, sampler_str_to_code(&texture_json.sampler), texture_json.mipmaps, texture_format_str_to_code(&texture_json.format),
-                //         adresat_str_to_code(&texture_json.repeater), var_name
-                //     );
+                fn_code += &format!("\nlet {} = TextureS::new(context, ssf_data[{}].as_ref(), {}, {}, {}, {}, Some(\"{}\"));", 
+                    var_name, files.len() as i32, sampler_str_to_code(&texture_json.sampler), texture_json.mipmaps, texture_format_str_to_code(&texture_json.format),
+                    adresat_str_to_code(&texture_json.repeater), var_name
+                );
 
-                //     ret_code += &format!("\n    {var_name},");
-                //     ret_struct_code += &format!("\n    pub {var_name}: TextureS,");
+                ret_code += &format!("\n{var_name},");
+                ret_struct_code += &format!("\npub {var_name}: TextureS,");
 
-                //     files.push(file_path);
-                // },
-                "renderTexture" => {
-                    let (_, json_path) = process_common_file_descriptor(&entry.path().to_path_buf());
+                files.push(file_path);
+            },
+            "renderTexture" => {
+                let (_, json_path) = process_common_file_descriptor(&path);
 
-                    let json_content = fs::read_to_string(&json_path)?;
-                    let render_texture_json: RenderTextureJson = serde_json::from_str(&json_content)?;
+                let json_content = fs::read_to_string(&json_path)?;
+                let render_texture_json: RenderTextureJson = serde_json::from_str(&json_content)?;
 
-                    let mut attachments_data = "".to_string();
+                let mut attachments_data = "".to_string();
 
-                    for (i, attachment) in render_texture_json.attachments.iter().enumerate() {
-                        let mut usages = "".to_string();
+                for (i, attachment) in render_texture_json.attachments.iter().enumerate() {
+                    let mut usages = "".to_string();
 
-                        if attachment.usages_COPY_DST { usages += &"TextureUsages::COPY_DST | "; } 
-                        if attachment.usages_COPY_SRC { usages += &"TextureUsages::COPY_SRC | "; } 
-                        if attachment.usages_RENDER_ATTACHMENT { usages += &"TextureUsages::RENDER_ATTACHMENT | "; } 
-                        if attachment.usages_STORAGE_ATOMIC { usages += &"TextureUsages::STORAGE_ATOMIC | "; } 
-                        if attachment.usages_STORAGE_BINDING { usages += &"TextureUsages::STORAGE_BINDING | "; } 
-                        if attachment.usages_TEXTURE_BINDING{ usages += &"TextureUsages::TEXTURE_BINDING | "; }
+                    if attachment.usages_COPY_DST { usages += &"TextureUsages::COPY_DST | "; } 
+                    if attachment.usages_COPY_SRC { usages += &"TextureUsages::COPY_SRC | "; } 
+                    if attachment.usages_RENDER_ATTACHMENT { usages += &"TextureUsages::RENDER_ATTACHMENT | "; } 
+                    if attachment.usages_STORAGE_ATOMIC { usages += &"TextureUsages::STORAGE_ATOMIC | "; } 
+                    if attachment.usages_STORAGE_BINDING { usages += &"TextureUsages::STORAGE_BINDING | "; } 
+                    if attachment.usages_TEXTURE_BINDING{ usages += &"TextureUsages::TEXTURE_BINDING | "; }
 
-                        usages += "TextureUsages::empty()";
+                    usages += "TextureUsages::empty()";
 
-                        attachments_data += &format!("\n({}, {}, Some(\"{}_{}\")),", texture_format_str_to_code(&attachment.format), usages, var_name, i);
-                    }
+                    attachments_data += &format!("\n({}, {}, Some(\"{}_{}\")),", texture_format_str_to_code(&attachment.format), usages, var_name, i);
+                }
 
-                    let depth_data = if let Some(depth) = render_texture_json.depth_attachment {
-                        let mut usages = "".to_string();
+                let depth_data = if let Some(depth) = render_texture_json.depth_attachment {
+                    let mut usages = "".to_string();
 
-                        if render_texture_json.depth_usages_COPY_DST { usages += &"TextureUsages::COPY_DST | "; } 
-                        if render_texture_json.depth_usages_COPY_SRC { usages += &"TextureUsages::COPY_SRC | "; } 
-                        if render_texture_json.depth_usages_RENDER_ATTACHMENT { usages += &"TextureUsages::RENDER_ATTACHMENT | "; } 
-                        if render_texture_json.depth_usages_STORAGE_ATOMIC { usages += &"TextureUsages::STORAGE_ATOMIC | "; } 
-                        if render_texture_json.depth_usages_STORAGE_BINDING { usages += &"TextureUsages::STORAGE_BINDING | "; } 
-                        if render_texture_json.depth_usages_TEXTURE_BINDING{ usages += &"TextureUsages::TEXTURE_BINDING | "; }
+                    if render_texture_json.depth_usages_COPY_DST { usages += &"TextureUsages::COPY_DST | "; } 
+                    if render_texture_json.depth_usages_COPY_SRC { usages += &"TextureUsages::COPY_SRC | "; } 
+                    if render_texture_json.depth_usages_RENDER_ATTACHMENT { usages += &"TextureUsages::RENDER_ATTACHMENT | "; } 
+                    if render_texture_json.depth_usages_STORAGE_ATOMIC { usages += &"TextureUsages::STORAGE_ATOMIC | "; } 
+                    if render_texture_json.depth_usages_STORAGE_BINDING { usages += &"TextureUsages::STORAGE_BINDING | "; } 
+                    if render_texture_json.depth_usages_TEXTURE_BINDING{ usages += &"TextureUsages::TEXTURE_BINDING | "; }
 
-                        usages += "TextureUsages::empty()";
+                    usages += "TextureUsages::empty()";
 
-                        format!("Some(({}, {}, Some(\"{}_depth\")))", texture_format_str_to_code(&depth), usages, var_name)
-                    } else {
-                        "None".to_string()
-                    };
+                    format!("Some(({}, {}, Some(\"{}_depth\")))", texture_format_str_to_code(&depth), usages, var_name)
+                } else {
+                    "None".to_string()
+                };
 
-                    fn_code += &format!("\nlet {} = RenderTexture::new(context, {}, {}, &[{}], {});", var_name, render_texture_json.width, render_texture_json.height, attachments_data, depth_data);
+                fn_code += &format!("\nlet {} = RenderTexture::new(context, {}, {}, &[{}], {});", var_name, render_texture_json.width, render_texture_json.height, attachments_data, depth_data);
 
-                    ret_code += &format!("\n{var_name},");
-                    ret_struct_code += &format!("\npub {var_name}: RenderTexture,");
+                ret_code += &format!("\n{var_name},");
+                ret_struct_code += &format!("\npub {var_name}: RenderTexture,");
 
-                },
-//                 "ubo" => {
-//                     let (_, json_path) = process_common_file_descriptor(&entry.path().to_path_buf());
-
-//                     let json_content = fs::read_to_string(&json_path)?;
-//                     let ubo_json: UboJson = serde_json::from_str(&json_content).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
-
-//                     let mut offset: u32 = 0;
-//                     let mut max_align: u32 = 0;
-//                     let mut pad_counter: u32 = 0;
-
-//                     let raw_name = entry.path().display().to_string().replace('\\', "/").replace("smq_proj/assets/", "").replace('/', "_").replace('.', "_");
-
-//                     let struct_name: String = raw_name.split('_').map(|word| {
-//                             let mut chars = word.chars();
-//                             match chars.next() {
-//                                 None => String::new(),
-//                                 Some(first_char) => {
-//                                     first_char.to_uppercase().collect::<String>() + chars.as_str()
-//                                 }
-//                             }
-//                         }).collect();
-
-//                     struct_code += &format!("\n#[repr(C)]\n#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]\npub struct {} {{", struct_name);
-
-//                     let mut builder = format!("
-// impl Default for {} {{
-//     fn default() -> Self {{
-//         Self {{", struct_name);
-
-//                     for var in &ubo_json.stuff {
-//                         let (var_size, var_align) = match var.type_.as_str() {
-//                             "i32" | "u32" | "f32" => (4, 4),
-//                             "Vec2" | "IVec2" | "UVec2" => (8, 8),
-//                             "Vec3" | "IVec3" | "UVec3" => (12, 16),
-//                             "Vec4" | "IVec4" | "UVec4" => (16, 16),
-//                             "Mat3" => (48, 16), 
-//                             "Mat4" => (64, 16),
-//                             _ => panic!("unknown ubo format: {}", var.type_),
-//                         };
-
-//                         if var_align > max_align { max_align = var_align; }
-
-//                         let aligned_offset = (offset + var_align - 1) & !(var_align - 1);
+            },
+            "blend" => {
+                let (file_path, _) = process_common_file_descriptor(&path);
+                
+                for entry in WalkDir::new(file_path.with_extension("")).into_iter().filter_map(|e| e.ok()) {
+                    if entry.path().is_file() {
                         
-//                         let padding_needed = aligned_offset - offset;
-//                         if padding_needed > 0 {
-//                             struct_code += &format!("\n    pub _pad{}: [u8; {}],", pad_counter, padding_needed);
-//                             builder += &format!("\n     _pad{}: [0; {}],", pad_counter, padding_needed);
-//                             pad_counter += 1;
-//                         }
+                        let smf_var_name = path_to_var(entry.path());
 
-//                         offset = aligned_offset + var_size;
+                        fn_code += &format!("\nlet {} = Mesh::new(context, ssf_data[{}].as_ref(), 32, Some(\"{}\"), BufferUsages::COPY_DST | BufferUsages::VERTEX).unwrap();", smf_var_name, files.len() as i32, smf_var_name);
 
-//                         struct_code += &format!("\n    pub {}: {},", var.name, var.type_);
+                        ret_code += &format!("\n{smf_var_name},");
+                        ret_struct_code += &format!("\npub {smf_var_name}: Mesh,");
 
-//                         let default_value_str: String = match var.type_.as_str() {
-//                             "i32" | "u32" => "0".to_string(),
-//                             "f32" => "0.0".to_string(),
-                            
-//                             "Vec2" | "IVec2" | "UVec2" | 
-//                             "Vec3" | "IVec3" | "UVec3" | 
-//                             "Vec4" | "IVec4" | "UVec4" => format!("{}::ZERO", var.type_),
-                            
-//                             "Mat3" | "Mat4" => format!("{}::IDENTITY", var.type_),
-                            
-//                             _ => panic!("unknown ubo format: {}", var.type_),
-//                         };
-//                         builder += &format!("\n    {}: {},", var.name, default_value_str);
-//                     }
-
-//                     let final_size = if max_align > 0 { (offset + max_align - 1) & !(max_align - 1) } else { 0 };
-//                     let end_padding = final_size - offset;
-                    
-//                     if end_padding > 0 {
-//                         struct_code += &format!("\n    pub _pad{}: [u8; {}],", pad_counter, end_padding);
-//                         builder += &format!("\n    _pad{}: [0; {}],", pad_counter, end_padding);
-//                     }
-
-//                     struct_code += &format!("\n}}\n{builder}\n        }}\n    }}\n}}\n\n");
-
-//                     fn_code += &format!("\n      let mut {} = Ubo::new(context, {}::default());", var_name, struct_name);
-
-//                     ret_code += &format!("\n    {},", var_name);
-
-//                     ret_struct_code += &format!("\n    pub {}: Ubo<{}>,", var_name, struct_name);
-//                 },
-                // "blend" => {
-                //     let (file_path, _) = process_common_file_descriptor(&entry.path().to_path_buf());
-
-                //     for entry in WalkDir::new(file_path.with_extension("")).into_iter().filter_map(|e| e.ok()) {
-                //         if entry.path().is_file() {
-                //             assets.smfs.push(AssetCreatorSMF { 
-                //                 id: files.len() as i32
-                //             });
-
-                //             files.push(entry.path().to_path_buf());
-                //         }
-                //     }                    
-                // },
-                _ => {}
-            }
+                        files.push(entry.path().to_path_buf());
+                    }
+                }                    
+            },
+            _ => {}
+        
         }
     }
 
@@ -296,24 +216,41 @@ pub fn bake() -> Result<(), Box<dyn Error>> {
     //     }
     // }
 
-    // let mut comp: Vec<(PathBuf, String, u8)> = Vec::new();
-    // comp.reserve(files.len());
+    let mut comp: Vec<(PathBuf, String, u8)> = Vec::new();
+    comp.reserve(files.len());
 
-    // for file in files {
-    //     comp.push((file.clone(), file.display().to_string().replace("\\", "/").replace("smq_proj/data/", "").replace("/", "_").replace(".", "_"), 0x00));
-    // }
+    for file in files {
+        comp.push((file.clone(), file.display().to_string().replace("\\", "/").replace("smq_proj/data/", "").replace("/", "_").replace(".", "_"), 0x00));
+    }
 
-    // save_custom_ssf("game", comp);
+    save_custom_ssf("game", comp);
 
+    let mut buttom = fs::read_to_string("smq_proj/config/build/inject/buttom.txt")?;
+    let mut outside = fs::read_to_string("smq_proj/config/build/inject/outside.txt")?;
+    let mut ret_struct = fs::read_to_string("smq_proj/config/build/inject/ret_struct.txt")?;
+    let mut ret = fs::read_to_string("smq_proj/config/build/inject/ret.txt")?;
+    let mut top = fs::read_to_string("smq_proj/config/build/inject/top.txt")?;
 
-    let buttom = fs::read_to_string("smq_proj/config/build/inject/buttom.txt")?;
-    let outside = fs::read_to_string("smq_proj/config/build/inject/outside.txt")?;
-    let ret_struct = fs::read_to_string("smq_proj/config/build/inject/ret_struct.txt")?;
-    let ret = fs::read_to_string("smq_proj/config/build/inject/ret.txt")?;
-    let top = fs::read_to_string("smq_proj/config/build/inject/top.txt")?;
+    if state.settings.bake_settings.generate_blit_code {
+        let attachment_name = path_to_var(&PathBuf::from(state.settings.bake_settings.render_texture_path.clone().ok_or("using blit gen wydouth setting renderTexture to blit")?));
+        let attachment = &state.settings.bake_settings.render_texture_attachment;
 
+        buttom += &format!("
+            let blit_group = BindGroupS::new(context, &[
+                {attachment_name}.attachments[{attachment}].get_texture_binding(ShaderStages::FRAGMENT),
+                {attachment_name}.attachments[{attachment}].get_sampler_binding(ShaderStages::FRAGMENT)
+            ], None);
 
-let code = format!("
+            let blitinfo = context.create_blit_pipeline(&blit_group);
+        ");
+
+        ret += "blitinfo,
+            blit_group,";
+        ret_struct += "pub blitinfo: BlitInfo,
+            pub blit_group: BindGroupS,";
+    }
+
+    let code = format!("
 // this code is generated by code
 // if you change this file your changes will be deleted
 
@@ -333,7 +270,7 @@ pub struct GenAssets {{
 }}
 
 impl GenAssets {{
-    pub fn init_gen_assets(context: &Context) -> Self {{
+    pub fn init_gen_assets(context: &Context, ssf_data: &[SSFAsset]) -> Self {{
         {top}
         {fn_code}
         {buttom}
@@ -343,7 +280,7 @@ impl GenAssets {{
         }};
     }}
 }}
-");
+");    
 
     fs::write("game/src/gen_bake.rs", code)?;
 
@@ -433,7 +370,7 @@ fn bake_auto_ubos(analisys: &[(Vec<WgslBinding>, Vec<WgslStruct>)], struct_code:
 }
 
 fn path_to_var(path: &Path) -> String {
-    return path.display().to_string().replace("\\", "/").replace("smq_proj/assets/", "").replace("/", "_").replace(".", "_");
+    return path.display().to_string().replace("\\", "/").replace("smq_proj/assets/", "").replace("smq_proj/data/", "").replace("/", "_").replace(".", "_");
 }
 
 fn sampler_str_to_code(strng: &str) -> String {
@@ -533,3 +470,90 @@ fn texture_format_str_to_code(strng: &str) -> String {
         _ => panic!("unknown texture format type: {strng}"),
     }.to_string();
 }
+
+//                 "ubo" => {
+//                     let (_, json_path) = process_common_file_descriptor(&entry.path().to_path_buf());
+
+//                     let json_content = fs::read_to_string(&json_path)?;
+//                     let ubo_json: UboJson = serde_json::from_str(&json_content).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+
+//                     let mut offset: u32 = 0;
+//                     let mut max_align: u32 = 0;
+//                     let mut pad_counter: u32 = 0;
+
+//                     let raw_name = entry.path().display().to_string().replace('\\', "/").replace("smq_proj/assets/", "").replace('/', "_").replace('.', "_");
+
+//                     let struct_name: String = raw_name.split('_').map(|word| {
+//                             let mut chars = word.chars();
+//                             match chars.next() {
+//                                 None => String::new(),
+//                                 Some(first_char) => {
+//                                     first_char.to_uppercase().collect::<String>() + chars.as_str()
+//                                 }
+//                             }
+//                         }).collect();
+
+//                     struct_code += &format!("\n#[repr(C)]\n#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]\npub struct {} {{", struct_name);
+
+//                     let mut builder = format!("
+// impl Default for {} {{
+//     fn default() -> Self {{
+//         Self {{", struct_name);
+
+//                     for var in &ubo_json.stuff {
+//                         let (var_size, var_align) = match var.type_.as_str() {
+//                             "i32" | "u32" | "f32" => (4, 4),
+//                             "Vec2" | "IVec2" | "UVec2" => (8, 8),
+//                             "Vec3" | "IVec3" | "UVec3" => (12, 16),
+//                             "Vec4" | "IVec4" | "UVec4" => (16, 16),
+//                             "Mat3" => (48, 16), 
+//                             "Mat4" => (64, 16),
+//                             _ => panic!("unknown ubo format: {}", var.type_),
+//                         };
+
+//                         if var_align > max_align { max_align = var_align; }
+
+//                         let aligned_offset = (offset + var_align - 1) & !(var_align - 1);
+                        
+//                         let padding_needed = aligned_offset - offset;
+//                         if padding_needed > 0 {
+//                             struct_code += &format!("\n    pub _pad{}: [u8; {}],", pad_counter, padding_needed);
+//                             builder += &format!("\n     _pad{}: [0; {}],", pad_counter, padding_needed);
+//                             pad_counter += 1;
+//                         }
+
+//                         offset = aligned_offset + var_size;
+
+//                         struct_code += &format!("\n    pub {}: {},", var.name, var.type_);
+
+//                         let default_value_str: String = match var.type_.as_str() {
+//                             "i32" | "u32" => "0".to_string(),
+//                             "f32" => "0.0".to_string(),
+                            
+//                             "Vec2" | "IVec2" | "UVec2" | 
+//                             "Vec3" | "IVec3" | "UVec3" | 
+//                             "Vec4" | "IVec4" | "UVec4" => format!("{}::ZERO", var.type_),
+                            
+//                             "Mat3" | "Mat4" => format!("{}::IDENTITY", var.type_),
+                            
+//                             _ => panic!("unknown ubo format: {}", var.type_),
+//                         };
+//                         builder += &format!("\n    {}: {},", var.name, default_value_str);
+//                     }
+
+//                     let final_size = if max_align > 0 { (offset + max_align - 1) & !(max_align - 1) } else { 0 };
+//                     let end_padding = final_size - offset;
+                    
+//                     if end_padding > 0 {
+//                         struct_code += &format!("\n    pub _pad{}: [u8; {}],", pad_counter, end_padding);
+//                         builder += &format!("\n    _pad{}: [0; {}],", pad_counter, end_padding);
+//                     }
+
+//                     struct_code += &format!("\n}}\n{builder}\n        }}\n    }}\n}}\n\n");
+
+//                     fn_code += &format!("\n      let mut {} = Ubo::new(context, {}::default());", var_name, struct_name);
+
+//                     ret_code += &format!("\n    {},", var_name);
+
+//                     ret_struct_code += &format!("\n    pub {}: Ubo<{}>,", var_name, struct_name);
+//                 },

@@ -1,3 +1,5 @@
+use std::fs;
+
 use bevy_ecs::world::World;
 use smq_engine::*;
 use wgpu::*;
@@ -8,10 +10,7 @@ use glam::*;
 
 pub struct Renderer {
     gen_assets: gen_bake::GenAssets,
-    mesh1: Mesh,
     mat1: Material,
-    blitinfo: BlitInfo,
-    glob_bind_1: BindGroupS,
     bind_group0: BindGroupS,
     bind_group1: BindGroupS,
     bind_group2: BindGroupS
@@ -19,17 +18,15 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new(context: &mut Context) -> Self {
-        let mut gen_assets = gen_bake::GenAssets::init_gen_assets(context);
+        
+        let ssf_data = load_ssf(&fs::read("smq_proj/build/game.ssf").expect("ssf file doesnt extist")).unwrap();
+
+        let mut gen_assets = gen_bake::GenAssets::init_gen_assets(context, &ssf_data);
 
         gen_assets.ubodata0.data.proj = Mat4::perspective_rh((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
 
         gen_assets.ubodata0.upload_data(context);
         gen_assets.ubodata2.upload_data(context);
-
-        let mesh1 = Mesh::new(
-            context, include_bytes!("../../../smq_proj/data/file/mesh/Suzanne.smf"), 
-            32, None, BufferUsages::COPY_DST | BufferUsages::VERTEX
-        ).unwrap();
 
         let vert_layout = Material::get_default_vert_layout();
 
@@ -44,7 +41,9 @@ impl Renderer {
         ], None);
 
         let bind_group2 = BindGroupS::new(context, &[
-            gen_assets.ubodata2.get_binding(ShaderStages::VERTEX)
+            gen_assets.ubodata2.get_binding(ShaderStages::VERTEX),
+            gen_assets.lakaka_png.get_texture_binding(ShaderStages::FRAGMENT),
+            gen_assets.lakaka_png.get_sampler_binding(ShaderStages::FRAGMENT)
         ], None);
 
         let mat1 = Material::new(context, Some(Face::Back), None, &gen_assets.renderer_main_renderTexture, mat_module1, vert_layout, CompareFunction::Less, [
@@ -54,19 +53,9 @@ impl Renderer {
             None
         ]);
 
-        let glob_bind_1 = BindGroupS::new(context, &[
-            gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT),
-            gen_assets.renderer_main_renderTexture.attachments[0].get_sampler_binding(ShaderStages::FRAGMENT)
-        ], None);
-
-        let blitinfo = context.create_blit_pipeline(&glob_bind_1);
-
         return Self {
             gen_assets,
-            mesh1,
             mat1,
-            blitinfo,
-            glob_bind_1,
             bind_group0,
             bind_group1,
             bind_group2
@@ -101,16 +90,16 @@ impl Renderer {
 
             self.mat1.set_render_material(&mut render_pass);
 
-            render_pass.set_vertex_buffer(0, self.mesh1.buffer.slice(..));
+            render_pass.set_vertex_buffer(0, self.gen_assets.file_mesh_Suzanne_smf.buffer.slice(..));
 
             render_pass.set_bind_group(0, &self.bind_group0.bind_group, &[]);
             render_pass.set_bind_group(1, &self.bind_group1.bind_group, &[]);
             render_pass.set_bind_group(2, &self.bind_group2.bind_group, &[]);
 
-            render_pass.draw(0..self.mesh1.vertex_count, 0..1);
+            render_pass.draw(0..self.gen_assets.file_mesh_Suzanne_smf.vertex_count, 0..1);
         }
 
-        context.blit_screen(&mut frame, &self.blitinfo, &self.glob_bind_1);
+        context.blit_screen(&mut frame, &self.gen_assets.blitinfo, &self.gen_assets.blit_group);
 
         context.draw_egui(&mut frame, full_output);
 

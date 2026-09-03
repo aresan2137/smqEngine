@@ -59,7 +59,7 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
             let var_name = global.name.as_deref().ok_or(format!("namless varible at group: {group}, and binding: {binding_idx}"))?;
             
             let ty = &module.types[global.ty];
-            let var_type = ty.name.as_deref().ok_or(format!("namless type at group: {group}, and binding: {binding_idx}"))?;
+            let var_type = ty.name.as_deref().unwrap_or("null");
 
             match global.space {
                 naga::AddressSpace::Uniform => {

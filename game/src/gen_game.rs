@@ -4,7 +4,6 @@
 
 #[repr(usize)]
 enum game {
-    file_tit_png = 0,
-    file_Untitled_Suzanne_smf = 1,
-    file_basic_wgsl = 2,
+    file_lakaka_png = 0,
+    file_mesh_Suzanne_smf = 1,
 }

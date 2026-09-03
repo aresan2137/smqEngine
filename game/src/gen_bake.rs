@@ -53,18 +53,39 @@ pub struct GenAssets {
     pub ubodata0: Ubo<UboData0>,
     pub ubodata1: Ubo<UboData1>,
     pub ubodata2: Ubo<UboData2>,
+    pub lakaka_png: TextureS,
+    pub file_mesh_Suzanne_smf: Mesh,
     pub renderer_main_renderTexture: RenderTexture,
+    pub blitinfo: BlitInfo,
+    pub blit_group: BindGroupS,
 }
 
 impl GenAssets {
-    pub fn init_gen_assets(context: &Context) -> Self {
+    pub fn init_gen_assets(context: &Context, ssf_data: &[SSFAsset]) -> Self {
         let mut ubodata0 = Ubo::new(context, UboData0::default());
         let mut ubodata1 = Ubo::new(context, UboData1::default());
         let mut ubodata2 = Ubo::new(context, UboData2::default());
+        let lakaka_png = TextureS::new(
+            context,
+            ssf_data[0].as_ref(),
+            smq_engine::SamplingMode::Nearest,
+            1,
+            TextureFormat::Rgba8UnormSrgb,
+            AddressMode::Repeat,
+            Some("lakaka_png"),
+        );
+        let file_mesh_Suzanne_smf = Mesh::new(
+            context,
+            ssf_data[1].as_ref(),
+            32,
+            Some("file_mesh_Suzanne_smf"),
+            BufferUsages::COPY_DST | BufferUsages::VERTEX,
+        )
+        .unwrap();
         let renderer_main_renderTexture = RenderTexture::new(
             context,
-            7680,
-            4320,
+            1280,
+            720,
             &[(
                 TextureFormat::Rgba8Unorm,
                 TextureUsages::RENDER_ATTACHMENT
@@ -79,11 +100,28 @@ impl GenAssets {
             )),
         );
 
+        let blit_group = BindGroupS::new(
+            context,
+            &[
+                renderer_main_renderTexture.attachments[0]
+                    .get_texture_binding(ShaderStages::FRAGMENT),
+                renderer_main_renderTexture.attachments[0]
+                    .get_sampler_binding(ShaderStages::FRAGMENT),
+            ],
+            None,
+        );
+
+        let blitinfo = context.create_blit_pipeline(&blit_group);
+
         return Self {
             ubodata0,
             ubodata1,
             ubodata2,
+            lakaka_png,
+            file_mesh_Suzanne_smf,
             renderer_main_renderTexture,
+            blitinfo,
+            blit_group,
         };
     }
 }

@@ -1,7 +1,8 @@
 //#![windows_subsystem = "windows"]
 
+use std::{path::{Path, PathBuf}, sync::Arc};
+
 use bevy_ecs::prelude::*;
-use egui::TextureFilter;
 use glam::*;
 
 use wgpu::FilterMode;
@@ -12,7 +13,7 @@ use components::*;
 
 use smq_engine::*;
 
-use crate::{editor::{editor_set_viewport_texture_id, editor_update, save_editor_layout}, free_cam::{FreeCamera, free_camera_system}};
+use crate::{editor::{EditorState, editor_set_viewport_texture_id, editor_update, save_editor_layout}, free_cam::{FreeCamera, free_camera_system}};
 
 mod editor;
 mod bake;
@@ -74,6 +75,7 @@ pub async fn run() {
                     }
                     WindowEvent::CloseRequested => {
                         save_editor_layout(&world);
+                        world.get_resource::<EditorState>().unwrap().settings.save();
 
                         elwt.exit();
                     }
@@ -113,4 +115,28 @@ pub async fn run() {
             _ => {}
         }
     }).unwrap();
+}
+
+pub fn drop_point(ui: &mut egui::Ui, existing: Option<String>, pre: impl FnOnce(&mut egui::Ui), post: impl FnOnce(&mut egui::Ui, Option<Arc<PathBuf>>)) {
+    ui.horizontal(|ui| {
+        pre(ui);
+
+        let (drop_rect, drop_response) = ui.allocate_exact_size(
+            egui::vec2(200.0, 30.0), 
+            egui::Sense::hover()
+        );
+
+        let bg_color = if drop_response.dnd_hover_payload::<PathBuf>().is_some() {
+            egui::Color32::from_rgb(100, 150, 200)
+        } else {
+            egui::Color32::from_rgb(50, 50, 50)
+        };
+        
+        ui.painter().rect_filled(drop_rect, 4.0, bg_color);
+        ui.painter().rect_stroke(drop_rect, 4.0, egui::Stroke::new(1.0, egui::Color32::GRAY), egui::StrokeKind::Inside);
+
+        ui.put(drop_rect, egui::Label::new( if let Some(var) = existing {format!("file:{var}")} else {"drop file here".to_string()}).selectable(false));
+
+        post(ui, drop_response.dnd_release_payload::<PathBuf>());
+    });
 }

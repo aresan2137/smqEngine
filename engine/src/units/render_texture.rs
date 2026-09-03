@@ -39,10 +39,13 @@ impl RenderTexture {
                 view_formats: &[]
             });
 
-            let view = texture.create_view(&TextureViewDescriptor::default());
+            let view = texture.create_view(&TextureViewDescriptor {
+                label: attachment.2,
+                ..Default::default()
+            });
             
             let sampler = context.device.create_sampler(&SamplerDescriptor {
-                label: None,
+                label: attachment.2,
                 address_mode_u: AddressMode::ClampToEdge,
                 address_mode_v: AddressMode::ClampToEdge,
                 address_mode_w: AddressMode::ClampToEdge,
@@ -74,7 +77,10 @@ impl RenderTexture {
                 view_formats: &[]
             });
 
-            let view = tex.create_view(&TextureViewDescriptor::default());
+            let view = tex.create_view(&TextureViewDescriptor {
+                label: depth.2,
+                ..Default::default()
+            });
 
             depth_texture = Some((tex, view, depth.0));
         }

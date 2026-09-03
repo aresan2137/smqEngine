@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, process::Command};
 
-use crate::editor::assets::Assets;
+use crate::{drop_point, editor::assets::Assets};
 
 use std::fs;
 
@@ -819,56 +819,47 @@ fn bind_group(path: &PathBuf, ui: &mut egui::Ui) {
 
     egui::ScrollArea::vertical().show(ui, |ui| {
         for (i, var) in bind_group_json.groups.iter_mut().enumerate() {
+
             ui.push_id(i, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label(format!("binding{}:", i));
+                let mmmmk = if let Some(vare) = var {
+                    Some(vare.potential_path.to_string())
+                } else { None };
 
-                    let (drop_rect, drop_response) = ui.allocate_exact_size(
-                        egui::vec2(200.0, 30.0), 
-                        egui::Sense::hover()
-                    );
-
-                    let bg_color = if drop_response.dnd_hover_payload::<std::path::PathBuf>().is_some() {
-                        egui::Color32::from_rgb(100, 150, 200)
-                    } else {
-                        egui::Color32::from_rgb(50, 50, 50)
-                    };
-                    
-                    ui.painter().rect_filled(drop_rect, 4.0, bg_color);
-                    ui.painter().rect_stroke(drop_rect, 4.0, egui::Stroke::new(1.0, egui::Color32::GRAY), egui::StrokeKind::Inside);
-
-                    ui.put(drop_rect, egui::Label::new( if let Some(vare) = var {format!("file:{}", vare.potential_path)} else {"drop file here".to_string()}).selectable(false));
-
-                    if let Some(dropped_path) = drop_response.dnd_release_payload::<std::path::PathBuf>() {
+                drop_point(ui, mmmmk, |ui| {
+                    ui.label(format!("binding{i}"));
+                }, |_, path| {
+                    if let Some(pat) = path {
                         *var = Some(BindGroupGroupJson { 
-                            potential_path: dropped_path.as_ref().display().to_string(), 
+                            potential_path: pat.display().to_string(), 
                             render_texture_id: 0,
                             standard_getter_id: 0,
                             visibility_compute: false,
                             visibility_fragment: false,
                             visibility_vertex: false
-                        });
-                    }
+                        });     
+                    }       
                 });
 
                 if let Some(vare) = var {
-                    if vare.potential_path.ends_with(".renderTexture") {
-                        ui.horizontal(|ui| {
-                            ui.label("render texture attachment:");
-                            
-                            ui.add(egui::DragValue::new(&mut vare.render_texture_id).speed(0.01));
-                        }); 
-                    }
-        
                     ui.horizontal(|ui| {
-                        ui.label("visibility:");
-                        
-                        ui.checkbox(&mut vare.visibility_compute, "compute");
-                        ui.checkbox(&mut vare.visibility_vertex, "vertex");
-                        ui.checkbox(&mut vare.visibility_fragment, "fragment");
-                    }); 
-                } 
-            });
+                        if vare.potential_path.ends_with(".renderTexture") {
+                            ui.horizontal(|ui| {
+                                ui.label("render texture attachment:");
+                                
+                                ui.add(egui::DragValue::new(&mut vare.render_texture_id).speed(0.01));
+                            }); 
+                        }
+            
+                        ui.horizontal(|ui| {
+                            ui.label("visibility:");
+                            
+                            ui.checkbox(&mut vare.visibility_compute, "compute");
+                            ui.checkbox(&mut vare.visibility_vertex, "vertex");
+                            ui.checkbox(&mut vare.visibility_fragment, "fragment");
+                        }); 
+                    });                    
+                }
+            });            
         }
     });
 

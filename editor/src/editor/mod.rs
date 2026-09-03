@@ -24,14 +24,13 @@ pub enum EditorTabs {
 pub struct EditorState {
     pub tree: egui_dock::DockState<EditorTabs>,
 
-    settings: settings::Settings,
-    assets: assets::Assets,
-    inspector: inspector::Inspector,
+    pub settings: settings::Settings,
+    pub assets: assets::Assets,
+    pub inspector: inspector::Inspector,
 
-    viewportid: Option<TextureId>
+    pub viewportid: Option<TextureId>
 }
 
-#[allow(unused)]
 struct EditorTabViewer<'a> {
     world: &'a mut World,
 
@@ -60,7 +59,7 @@ impl Default for EditorState {
 
         Self { 
             tree, 
-            settings: settings::Settings::default(),
+            settings: settings::Settings::load(),
             assets: assets::Assets::default(),
             inspector: inspector::Inspector::default(),
             viewportid: None
@@ -74,7 +73,7 @@ impl EditorState {
             if let Ok(saved_tree) = serde_json::from_str::<egui_dock::DockState<EditorTabs>>(&json_string) {
                 return Self { 
                     tree: saved_tree, 
-                    settings: settings::Settings::default(),
+                    settings: settings::Settings::load(),
                     assets: assets::Assets::default(),
                     inspector: inspector::Inspector::default(),
                     viewportid: None
@@ -171,7 +170,6 @@ pub fn editor_set_viewport_texture_id(world: &mut World, id: TextureId) {
 
 pub fn editor_update(world: &mut World) {
 
-    #[allow(unused)]
     let delta = world.get_resource::<Delta>().expect("delta not found").delta;
 
     let mut dock_state = world.remove_resource::<EditorState>().unwrap_or_else(EditorState::load_or_default);
@@ -206,14 +204,14 @@ pub fn editor_update(world: &mut World) {
 
             ui.horizontal(|ui| {
                 if ui.button("play").clicked() {
-                    bake().unwrap();
+                    bake(&dock_state).unwrap();
                     let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
                 }
                 if ui.button("play no bake").clicked() {
                     let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
                 }
                 if ui.button("bake").clicked() {
-                    bake().unwrap();
+                    bake(&dock_state).unwrap();
                 }
             });      
         });
