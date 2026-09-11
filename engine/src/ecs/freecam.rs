@@ -4,7 +4,7 @@ use bevy_ecs::prelude::*;
 use glam::*;
 use winit::{keyboard::KeyCode, window::Window};
 
-use crate::components::*;
+use crate::{Delta, Inputs};
 
 #[derive(Component)]
 pub struct FreeCamera {
@@ -16,8 +16,7 @@ pub struct FreeCamera {
     pub is_controlling: bool
 }
 
-#[allow(dead_code)]
-pub fn free_camera_system(time: Res<Delta>, input: Res<InputState>, mut query: Query<&mut FreeCamera>) {
+pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query<&mut FreeCamera>) {
     for mut cam in query.iter_mut() {
         
         if input.pressed(KeyCode::KeyZ) {
@@ -54,14 +53,18 @@ pub fn free_camera_system(time: Res<Delta>, input: Res<InputState>, mut query: Q
     }
 }
 
-pub fn f11_system(world: &World, window: &Arc<Window>) {
-    let input = world.get_resource::<InputState>().expect("input not found");
+pub fn f11_system(world: &World, window: &Option<Arc<Window>>) {
+    if let Some(window) = window {
+        let input = world.get_resource::<Inputs>().expect("input not found");
 
-    if input.pressed(KeyCode::F11) {
-        if window.fullscreen().is_some() {
-            window.set_fullscreen(None);
-        } else {
-            window.set_fullscreen(Some(winit::window::Fullscreen::Borderless(None)));
+        if input.pressed(KeyCode::F11) {
+            if window.fullscreen().is_some() {
+                window.set_fullscreen(None);
+            } else {
+                window.set_fullscreen(Some(winit::window::Fullscreen::Borderless(None)));
+            }
         }
-    }
+    } else {
+        log::error!("window doesn't exist");
+    }    
 }

@@ -1,6 +1,6 @@
 //#![windows_subsystem = "windows"]
 
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
 
 use bevy_ecs::prelude::*;
 use glam::*;
@@ -64,7 +64,7 @@ pub async fn run() {
                 let response = context.egui_state.on_window_event(&context.window, event_window);
         
                 if response.consumed {
-                    return; 
+                    //return; 
                 }
 
                 match event_window {
@@ -84,7 +84,7 @@ pub async fn run() {
                             is_minimized = true;
                         } else {
                             is_minimized = false;
-                            context.resize(*physical_size);
+                            //context.resize(*physical_size);
                         }
                     }
                     WindowEvent::RedrawRequested => {
@@ -95,6 +95,8 @@ pub async fn run() {
                         schedule.run(&mut world);
 
                         editor_update(&mut world);
+
+                        println!("{}", world.get_resource_mut::<Delta>().expect("delta not found").delta);
 
                         let full_output = context.end_egui_record();
 

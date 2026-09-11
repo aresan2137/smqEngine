@@ -2,23 +2,35 @@ use std::fmt::Debug;
 use std::panic;
 
 pub fn init() {
-    panic::set_hook(Box::new(|panic_info| {
-        let (file, line) = if let Some(location) = panic_info.location() {
-            (location.file(), location.line())
-        } else {
-            ("unknown file", 0)
-        };
+    #[cfg(target_arch = "wasm32")]
+    {
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
+        
+        console_log::init_with_level(log::Level::Debug).expect("failed to init logger");
+    }
 
-        let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-            *s
-        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
-            s.as_str()
-        } else {
-            "unknown critical"
-        };
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        panic::set_hook(Box::new(|panic_info| {
+            let (file, line) = if let Some(location) = panic_info.location() {
+                (location.file(), location.line())
+            } else {
+                ("unknown file", 0)
+            };
 
-        eprintln!("[PANIC] {}:{} -> {}", file, line, msg);
-    }));
+            let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+                *s
+            } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+                s.as_str()
+            } else {
+                "unknown critical"
+            };
+
+            log::error!("[PANIC] {}:{} -> {}", file, line, msg);
+        }));
+
+        env_logger::init();
+    }
 }
 
 pub trait LogExpect<T> {
@@ -35,7 +47,7 @@ impl<T, E: Debug> LogExpect<T> for Result<T, E> {
                 let file = location.file();
                 let line = location.line();
 
-                eprintln!("[FATAL] {}:{} -> {}: {:?}", file, line, msg, e);
+                log::error!("[FATAL] {}:{} -> {}: {:?}", file, line, msg, e);
                 
                 panic!("{}: {:?}", msg, e);
             }
@@ -53,7 +65,7 @@ impl<T> LogExpect<T> for Option<T> {
                 let file = location.file();
                 let line = location.line();
 
-                eprintln!("[FATAL] {}:{} -> null: {}", file, line, msg);
+                log::error!("[FATAL] {}:{} -> null: {}", file, line, msg);
                 
                 panic!("{}", msg);
             }

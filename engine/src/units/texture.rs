@@ -17,7 +17,8 @@ pub enum SamplingMode {
 }
 
 impl TextureS {
-    pub fn new(context: &Context, bytes: &[u8], sampling: SamplingMode, mitmap_level: u32, format: TextureFormat, repeater: AddressMode, label: Option<&str>) -> Self {
+    pub fn new<D>(context: &Context<D>, bytes: &[u8], sampling: SamplingMode, mitmap_level: u32, format: TextureFormat, repeater: AddressMode, label: Option<&str>) -> Self {
+        let holding = context.holding.as_ref().unwrap();
         let img = image::load_from_memory(bytes).expect("failed to load texture");
         let rgba = img.to_rgba8();
         let dimensions = img.dimensions();
@@ -28,7 +29,7 @@ impl TextureS {
             depth_or_array_layers: 1
         };
 
-        let texture = context.device.create_texture(&wgpu::TextureDescriptor {
+        let texture = holding.device.create_texture(&wgpu::TextureDescriptor {
             label,
             size,
             mip_level_count: mitmap_level,
@@ -39,7 +40,7 @@ impl TextureS {
             view_formats: &[]
         });
 
-        context.queue.write_texture(
+        holding.queue.write_texture(
             TexelCopyTextureInfo {
                 texture: &texture,
                 mip_level: 0,
@@ -56,14 +57,14 @@ impl TextureS {
         );
 
         let view = texture.create_view(&TextureViewDescriptor::default());
-        let sampler = context.device.create_sampler(&SamplerDescriptor { 
+        let sampler = holding.device.create_sampler(&SamplerDescriptor { 
             label: None, 
             address_mode_u: repeater, 
             address_mode_v: repeater, 
             address_mode_w: repeater, 
             mag_filter: if sampling == SamplingMode::Nearest { FilterMode::Nearest } else { FilterMode::Linear }, 
             min_filter: if sampling == SamplingMode::Nearest { FilterMode::Nearest } else { FilterMode::Linear }, 
-            mipmap_filter: if sampling == SamplingMode::Trilinear { FilterMode::Linear } else { FilterMode::Nearest }, 
+            mipmap_filter: if sampling == SamplingMode::Trilinear { MipmapFilterMode::Linear } else { MipmapFilterMode::Nearest }, 
             ..Default::default()
         });
 
@@ -74,7 +75,8 @@ impl TextureS {
         };
     }
 
-    pub fn from_color(context: &Context, color: Color) -> Self {
+    pub fn from_color<D>(context: &Context<D>, color: Color) -> Self {
+        let holding = context.holding.as_ref().unwrap();
         let data = [color.r as u8, color.g as u8, color.b as u8, color.a as u8];
 
         let size = Extent3d {
@@ -83,7 +85,7 @@ impl TextureS {
             depth_or_array_layers: 1,
         };
 
-        let texture = context.device.create_texture(&TextureDescriptor {
+        let texture = holding.device.create_texture(&TextureDescriptor {
             label: None,
             size,
             mip_level_count: 1,
@@ -94,7 +96,7 @@ impl TextureS {
             view_formats: &[]
         });
 
-        context.queue.write_texture(
+        holding.queue.write_texture(
             TexelCopyTextureInfo {
                 texture: &texture,
                 mip_level: 0,
@@ -111,13 +113,13 @@ impl TextureS {
         );
 
         let view = texture.create_view(&TextureViewDescriptor::default());
-        let sampler = context.device.create_sampler(&SamplerDescriptor {
+        let sampler = holding.device.create_sampler(&SamplerDescriptor {
             address_mode_u: AddressMode::Repeat,
             address_mode_v: AddressMode::Repeat,
             address_mode_w: AddressMode::Repeat,
             mag_filter: FilterMode::Nearest,
             min_filter: FilterMode::Nearest,
-            mipmap_filter: FilterMode::Nearest,
+            mipmap_filter: MipmapFilterMode::Nearest,
             ..Default::default()
         });
 

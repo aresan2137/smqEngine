@@ -10,10 +10,10 @@ pub struct DynamicUbo<T> {
 }
 
 impl<T: Pod> DynamicUbo<T> {
-    pub fn new(context: &Context, data: Vec<T>) -> Self {
+    pub fn new<D>(context: &Context<D>, data: Vec<T>) -> Self {
         let size = std::mem::size_of::<T>() as u64;
 
-        assert!( // it would be nice for it to be compile time
+        assert!(
             size % 256 == 0, 
             "UBO type must be multiple of 256 its: {}", 
             size
@@ -21,7 +21,7 @@ impl<T: Pod> DynamicUbo<T> {
 
         let buffer_size = size * data.len() as u64;
 
-        let buffer = context.device.create_buffer(&BufferDescriptor { 
+        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor { 
             label: None, 
             size: buffer_size, 
             usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM, 
@@ -35,8 +35,8 @@ impl<T: Pod> DynamicUbo<T> {
         };
     }
 
-    pub fn upload_data(&self, context: &Context) {
-        context.queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.data));
+    pub fn upload_data<D>(&self, context: &Context<D>) {
+        context.holding.as_ref().unwrap().queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.data));
     }
 
     pub fn get_binding(&self, visibility: ShaderStages) -> BindingS<'_> {
@@ -70,10 +70,10 @@ pub struct Ubo<T> {
 }
 
 impl<T: Pod> Ubo<T> {
-    pub fn new(context: &Context, data: T) -> Self {
+    pub fn new<D>(context: &Context<D>, data: T) -> Self {
         let size = std::mem::size_of::<T>() as u64;
 
-        let buffer = context.device.create_buffer(&BufferDescriptor { 
+        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor { 
             label: None, 
             size: size, 
             usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
@@ -87,8 +87,8 @@ impl<T: Pod> Ubo<T> {
         };
     }
 
-    pub fn upload_data(&self, context: &Context) {
-        context.queue.write_buffer(&self.buffer, 0, bytemuck::bytes_of(&self.data));
+    pub fn upload_data<D>(&self, context: &Context<D>) {
+        context.holding.as_ref().unwrap().queue.write_buffer(&self.buffer, 0, bytemuck::bytes_of(&self.data));
     }
 
     pub fn get_binding(&self, visibility: ShaderStages) -> BindingS<'_> {

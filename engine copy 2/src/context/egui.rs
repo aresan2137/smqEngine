@@ -1,45 +1,37 @@
-use std::sync::OnceLock;
-
 use wgpu::*;
 
-use crate::{Context, FrameInfo};
+use crate::{Context, FrameInfo, ui};
 
-pub fn ui() -> egui::Context {
-    static CTX: OnceLock<egui::Context> = OnceLock::new();
-    CTX.get_or_init(|| egui::Context::default()).clone()
-}
-
-impl<D> Context<'_, D> {
+impl Context<'_> {
     pub fn start_egui_record(&mut self) {
-        let raw_input = self.holding.as_mut().unwrap().egui_state.take_egui_input(self.window.as_ref().unwrap());
+        let raw_input = self.egui_state.take_egui_input(&self.window);
         ui().begin_pass(raw_input);
-    }
+    } 
 
     pub fn end_egui_record(&mut self) -> egui::FullOutput {
-        let full_output = ui().end_pass();
+        let full_output = ui().end_pass(); 
 
         let platform_output = full_output.platform_output.clone();
-        self.holding.as_mut().unwrap().egui_state.handle_platform_output(self.window.as_ref().unwrap(), platform_output);
+        self.egui_state.handle_platform_output(&self.window, platform_output);
 
         return full_output;
     }
 
-    pub fn draw_egui<'a>(&mut self, info: &'a mut FrameInfo, mut full_output: egui::FullOutput) {
-        let holding = self.holding.as_mut().unwrap();
+    pub fn draw_egui<'a>(&mut self, info: &'a mut FrameInfo, full_output: egui::FullOutput) {
         let paint_jobs = ui().tessellate(full_output.shapes, 1.0);
 
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
-            size_in_pixels: [holding.surface_config.width, holding.surface_config.height],
+            size_in_pixels: [self.surface_config.width, self.surface_config.height],
             pixels_per_point: 1.0,
         };
 
         for (id, image_delta) in &full_output.textures_delta.set {
             for delta in image_delta {
-                holding.egui_renderer.update_texture(&holding.device, &holding.queue, *id, delta);
+                self.egui_renderer.update_texture(&self.device, &self.queue, *id, delta);
             }
         }
 
-        holding.egui_renderer.update_buffers(&holding.device, &holding.queue, &mut info.encoder, &paint_jobs, &screen_descriptor);
+        self.egui_renderer.update_buffers(&self.device, &self.queue, &mut info.encoder, &paint_jobs, &screen_descriptor);
 
         {
             let mut ui_pass = info.encoder.begin_render_pass(&RenderPassDescriptor {
@@ -50,6 +42,7 @@ impl<D> Context<'_, D> {
                     depth_slice: None,
                     ops: Operations {
                         load: LoadOp::Load,
+                        //load: LoadOp::Clear(Color::BLUE),
                         store: StoreOp::Store
                     },
                 })],
@@ -59,13 +52,11 @@ impl<D> Context<'_, D> {
                 multiview_mask: None
             }).forget_lifetime();
 
-            holding.egui_renderer.render(&mut ui_pass, &paint_jobs[..], &screen_descriptor);
+            self.egui_renderer.render(&mut ui_pass, &paint_jobs[..], &screen_descriptor);
         }
 
         for id in &full_output.textures_delta.free {
-            holding.egui_renderer.free_texture(id);
+            self.egui_renderer.free_texture(id);
         }
-
-        full_output.textures_delta.clear();
     }
 }

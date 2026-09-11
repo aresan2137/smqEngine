@@ -106,13 +106,13 @@ impl Assets {
                     let _ = std::fs::create_dir_all(self.path.join("new_folder"));
                     self.rename_buffer = "new_folder".to_string();
                     self.renaming = Some(self.path.join("new_folder"));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("new file").clicked() {
                     let _ = std::fs::write(self.path.join("new_file"), "");
                     self.rename_buffer = "new_file".to_string();
                     self.renaming = Some(self.path.join("new_file"));
-                    ui.close_menu();
+                    ui.close();
                 }
                 ui.separator(); 
                 if ui.button("import file").clicked() {
@@ -125,7 +125,7 @@ impl Assets {
                             }
                         }
                     }
-                    ui.close_menu();
+                    ui.close();
                 }
             });
 
@@ -163,7 +163,7 @@ impl Assets {
                     card_response.dnd_set_drag_payload(path.clone());
                     let is_selected = self.selected.as_ref() == Some(&path);
 
-                    ui.allocate_new_ui(UiBuilder::default().max_rect(card_rect), |ui| {
+                    ui.allocate_ui(UiBuilder::default().max_rect(card_rect), |ui| {
                         ui.vertical_centered(|ui| {
                             ui.add_space(4.0);
 
@@ -219,7 +219,7 @@ impl Assets {
                         if ui.button("change name").clicked() {
                             self.renaming = Some(path.clone());
                             self.rename_buffer = file_name.clone();
-                            ui.close_menu();
+                            ui.close();
                         }
                         ui.separator();
                         if ui.button("delete").clicked() {
@@ -228,7 +228,7 @@ impl Assets {
                                 else { let _ = std::fs::remove_file(&path); }
                             }
                             self.selected = None;
-                            ui.close_menu();
+                            ui.close();
                         }
                     });
 

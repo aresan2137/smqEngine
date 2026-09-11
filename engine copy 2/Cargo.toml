@@ -1,16 +1,12 @@
 [package]
-name = "smq_game"
+name = "smq_engine"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-name = "smq_game_lib"
-path = "src/main.rs"
 
 [dependencies]
-smq_engine = { path = "../engine" }
-
 winit = "0.30.0"
 glam = { version = "0.33.6", features = ["bytemuck"] }
 wgpu = "30.0"
@@ -18,12 +14,10 @@ image = { version = "0.25.10", default-features = false, features = ["png"] }
 bytemuck = { version = "1.25", features = ["derive"] }
 pollster = "0.4.0"
 log = "0.4"
-egui = { version = "0.36" }
+egui = "0.36"
 egui-winit = { version = "0.36", default-features = false, features = ["links"]}
-egui-wgpu = { version = "0.36" }
+egui-wgpu = "0.36"
 env_logger = "0.11.11"
-bevy_ecs = "0.19"
-web-time = "1.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
@@ -31,5 +25,8 @@ console_error_panic_hook = "0.1"
 web-sys = { version = "0.3", features = ["Document", "Window", "Element", "HtmlCanvasElement", "Node"] }
 wasm-bindgen-futures = "0.4"
 
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

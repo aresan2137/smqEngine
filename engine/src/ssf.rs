@@ -9,7 +9,7 @@ impl AsRef<[u8]> for SSFAsset {
     fn as_ref(&self) -> &[u8] {
         match self {
             SSFAsset::Binary(bine) => bine.as_slice(),
-            _ => panic!("trying to get &[u8] from SSFAsset but type isnt Binary"),
+            //_ => panic!("trying to get &[u8] from SSFAsset but type isnt Binary"),
         }
     }
 }

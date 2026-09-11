@@ -5,44 +5,44 @@ use naga::{front::wgsl, valid::{Validator}};
 
 use std::error::Error;
 
-pub struct WgslStorage {
+pub struct _WgslStorage {
     pub access: String
 }
 
-pub struct WgslImage {
+pub struct _WgslImage {
     pub dim: ImageDimension,
     pub class: ImageClass,
 }
 
-pub enum WgslBindingType {
+pub enum _WgslBindingType {
     Ubo(()),
-    Storage(WgslStorage),
-    Image(WgslImage),
+    Storage(_WgslStorage),
+    Image(_WgslImage),
     Sampler(())
 }
 
-pub struct WgslBinding {
+pub struct _WgslBinding {
     pub group: u32,
     pub binding: u32,
     pub var_name: String,
     pub var_type: String,
-    pub binding_type: WgslBindingType   
+    pub binding_type: _WgslBindingType   
 }
 
 #[derive(Clone, PartialEq)]
-pub struct WgslStructVar {
+pub struct _WgslStructVar {
     pub name: String,
     pub type_: String,
     pub offset: u32
 }
 
 #[derive(Clone, PartialEq)]
-pub struct WgslStruct {
+pub struct _WgslStruct {
     pub name: String,
-    pub vars: Vec<WgslStructVar>
+    pub vars: Vec<_WgslStructVar>
 }
 
-pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<WgslBinding>, Vec<WgslStruct>), Box<dyn Error>> {
+pub fn _analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<_WgslBinding>, Vec<_WgslStruct>), Box<dyn Error>> {
     let source = fs::read_to_string(path)?;
     let module = wgsl::parse_str(&source)?;
 
@@ -63,22 +63,22 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
 
             match global.space {
                 naga::AddressSpace::Uniform => {
-                    bindings.push(WgslBinding {
+                    bindings.push(_WgslBinding {
                         group: group,
                         binding: binding_idx,
                         var_name: var_name.to_string(), 
                         var_type: var_type.to_string(),
-                        binding_type: WgslBindingType::Ubo(())
+                        binding_type: _WgslBindingType::Ubo(())
                     });
                 }
                 naga::AddressSpace::Storage { access } => {
                     let access = if access.contains(naga::StorageAccess::STORE) { "Read/Write" } else { "Read-Only" };
-                    bindings.push(WgslBinding {
+                    bindings.push(_WgslBinding {
                         group: group,
                         binding: binding_idx,
                         var_name: var_name.to_string(), 
                         var_type: var_type.to_string(),
-                        binding_type: WgslBindingType::Storage(WgslStorage { 
+                        binding_type: _WgslBindingType::Storage(_WgslStorage { 
                             access: access.to_string()
                         })
                     });                
@@ -86,12 +86,12 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
                 naga::AddressSpace::Handle => {
                     match &ty.inner {
                         naga::TypeInner::Image { class, dim, .. } => {
-                            bindings.push(WgslBinding {
+                            bindings.push(_WgslBinding {
                                 group: group,
                                 binding: binding_idx,
                                 var_name: var_name.to_string(), 
                                 var_type: var_type.to_string(),
-                                binding_type: WgslBindingType::Image(WgslImage { 
+                                binding_type: _WgslBindingType::Image(_WgslImage { 
                                     dim: dim.clone(), 
                                     class: class.clone()
                                 })
@@ -102,15 +102,15 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
                                 todo!("comparition sampler") 
                             };
 
-                            bindings.push(WgslBinding {
+                            bindings.push(_WgslBinding {
                                 group: group,
                                 binding: binding_idx,
                                 var_name: var_name.to_string(), 
                                 var_type: var_type.to_string(),
-                                binding_type: WgslBindingType::Sampler(())
+                                binding_type: _WgslBindingType::Sampler(())
                             });  
                         }
-                        _ => todo!("some other handle"),
+                        _ => todo!("some other handle")
                     }
                 }
                 _ => {} 
@@ -126,7 +126,7 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
                 continue;
             }
 
-            let mut struc = WgslStruct {
+            let mut struc = _WgslStruct {
                 name: struct_name.to_string(),
                 vars: Vec::with_capacity(members.len())
             };
@@ -173,7 +173,7 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
                     _ => return Err(format!("unknown type in file: {}", path.display()).into()),
                 };
 
-                struc.vars.push(WgslStructVar {
+                struc.vars.push(_WgslStructVar {
                     name: (member.name.clone().ok_or("eoeoeoeoeoeo")?).to_string(),
                     type_,
                     offset: member.offset
@@ -188,8 +188,8 @@ pub fn analize_wgsl_file(path: &Path, validator: &mut Validator) -> Result<(Vec<
 
 }
 
-pub fn wgsl_analisys_to_ubos(analisys: &[(Vec<WgslBinding>, Vec<WgslStruct>)]) -> Result<Vec<WgslStruct>, Box<dyn Error>> {
-    let mut final_ubo: Vec<WgslStruct> = Vec::new();
+pub fn _wgsl_analisys_to_ubos(analisys: &[(Vec<_WgslBinding>, Vec<_WgslStruct>)]) -> Result<Vec<_WgslStruct>, Box<dyn Error>> {
+    let mut final_ubo: Vec<_WgslStruct> = Vec::new();
 
     for anlize in analisys.iter() {
         for struc in anlize.1.iter() {

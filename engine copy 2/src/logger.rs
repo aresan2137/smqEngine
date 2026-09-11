@@ -19,27 +19,8 @@ pub fn init() {
 
         eprintln!("[PANIC] {}:{} -> {}", file, line, msg);
     }));
-}
 
-#[macro_export]
-macro_rules! log_info {
-    ($($arg:tt)*) => {
-        println!("[INFO] {}:{} -> {}", file!(), line!(), format_args!($($arg)*));
-    };
-}
-
-#[macro_export]
-macro_rules! log_warn {
-    ($($arg:tt)*) => {
-        println!("[WARN] {}:{} -> {}", file!(), line!(), format_args!($($arg)*));
-    };
-}
-
-#[macro_export]
-macro_rules! log_error {
-    ($($arg:tt)*) => {
-        eprintln!("[ERROR] {}:{} -> {}", file!(), line!(), format_args!($($arg)*));
-    };
+    env_logger::init();
 }
 
 pub trait LogExpect<T> {

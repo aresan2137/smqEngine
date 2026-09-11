@@ -1,4 +1,4 @@
-use crate::{BindGroupS, context::*};
+use crate::{BindGroupS, RenderTexture, context::*};
 
 const BLIT_SHADER: &str = "struct VertexOutput { @builtin(position) position: vec4<f32>, @location(0) uv: vec2<f32>};
 @vertex
@@ -25,26 +25,21 @@ pub struct BlitInfo {
     pub blit_pipeline: RenderPipeline
 }
 
-impl<D> Context<'_, D> {
+impl Context<'_> {
     pub fn start_frame(&mut self) -> Option<FrameInfo> {
-        let frame = match self.surface.as_ref().unwrap().get_current_texture() {
+        let frame = match self.surface.get_current_texture() {
             CurrentSurfaceTexture::Success(frame) => frame,
-            CurrentSurfaceTexture::Suboptimal(frame) => {log::warn!("suboptimal"); frame},
+            CurrentSurfaceTexture::Suboptimal(frame) => frame,
             CurrentSurfaceTexture::Timeout => return None,
             CurrentSurfaceTexture::Occluded => return None,
-            CurrentSurfaceTexture::Outdated => return None,
-            CurrentSurfaceTexture::Lost => {
-                let size = self.window.as_ref().unwrap().inner_size();
-                self.resize(&size);
-                log::warn!("lost");
-                return None;
-            },
+            CurrentSurfaceTexture::Outdated => todo!(),
+            CurrentSurfaceTexture::Lost => todo!(),
             CurrentSurfaceTexture::Validation => panic!("validation")
         };
 
         let view = frame.texture.create_view(&TextureViewDescriptor::default());
 
-        let encoder = self.holding.as_ref().unwrap().device.create_command_encoder(&CommandEncoderDescriptor { 
+        let encoder = self.device.create_command_encoder(&CommandEncoderDescriptor { 
             label: None
         });
 
@@ -56,9 +51,9 @@ impl<D> Context<'_, D> {
     }
 
     pub fn end_frame(&self, info: FrameInfo) {
-        self.holding.as_ref().unwrap().queue.submit(std::iter::once(info.encoder.finish()));
+        self.queue.submit(std::iter::once(info.encoder.finish()));
 
-        self.holding.as_ref().unwrap().queue.present(info.frame);
+        self.queue.present(info.frame);
     }
 
     // pub fn get_compute_pass<'a>(&self, info: &'a mut FrameInfo) -> ComputePass<'a> {
@@ -69,18 +64,18 @@ impl<D> Context<'_, D> {
     // }
 
     pub fn create_blit_pipeline<'a>(&self, bind_group: &BindGroupS) -> BlitInfo {
-        let blit_shader = self.holding.as_ref().unwrap().device.create_shader_module(ShaderModuleDescriptor { 
+        let blit_shader = self.device.create_shader_module(ShaderModuleDescriptor { 
             label: None, 
             source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(BLIT_SHADER))
         });
 
-        let blit_pipeline_layout = self.holding.as_ref().unwrap().device.create_pipeline_layout(&PipelineLayoutDescriptor {
+        let blit_pipeline_layout = self.device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group.bind_group_layout)],
             immediate_size: 0
         });
 
-        let blit_pipeline = self.holding.as_ref().unwrap().device.create_render_pipeline(&RenderPipelineDescriptor {
+        let blit_pipeline = self.device.create_render_pipeline(&RenderPipelineDescriptor {
             label: None,
             layout: Some(&blit_pipeline_layout),
             vertex: wgpu::VertexState {
@@ -93,7 +88,7 @@ impl<D> Context<'_, D> {
                 module: &blit_shader,
                 entry_point: Some("f"),
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: self.holding.as_ref().unwrap().surface_format.clone(),
+                    format: self.surface_format.clone(),
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL
                 })],
@@ -145,5 +140,22 @@ impl<D> Context<'_, D> {
             blit_pass.draw(0..3, 0..1);
         }
     }
+
+    // pub fn clear_surface(&self, info: &mut FrameInfo) {
+    //     info.encoder.begin_render_pass(&RenderPassDescriptor {
+    //         label: None,
+    //         color_attachments: &[Some(RenderPassColorAttachment {
+    //             view: &info.view, 
+    //             resolve_target: None,
+    //             ops: Operations {
+    //                 load: LoadOp::Clear(Color::BLACK), 
+    //                 store: StoreOp::Store
+    //             },
+    //         })],
+    //         depth_stencil_attachment: None,
+    //         timestamp_writes: None,
+    //         occlusion_query_set: None
+    //     });
+    // }
 }
 

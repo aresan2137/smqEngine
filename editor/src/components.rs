@@ -59,7 +59,7 @@ impl Delta {
         {
             let current_time = Instant::now();
             if current_time < self.next_frame_time {
-                std::thread::sleep(self.next_frame_time - current_time);
+                //std::thread::sleep(self.next_frame_time - current_time);
             }
             self.next_frame_time = Instant::now() + self.target_frame_duration;
         }    

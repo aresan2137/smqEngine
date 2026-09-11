@@ -82,9 +82,9 @@ impl Settings {
 
                                 ui.checkbox(&mut self.bake_settings.generate_blit_code, "generate blit code");
 
-                                drop_point(ui, self.bake_settings.render_texture_path.clone(), |ui| {
+                                drop_point(ui, self.bake_settings.render_texture_path.clone(), |_| {
 
-                                }, |ui, path| {
+                                }, |_, path| {
                                     if let Some(paka) = path {
                                         self.bake_settings.render_texture_path = Some(paka.display().to_string());
                                     }                                    

@@ -2,7 +2,7 @@ use std::process::Command;
 
 use bevy_ecs::prelude::*;
 use egui::TextureId;
-use crate::{bake::bake, components::*};
+use crate::bake::bake;
 use smq_engine::*;
 
 mod settings;
@@ -32,7 +32,7 @@ pub struct EditorState {
 }
 
 struct EditorTabViewer<'a> {
-    world: &'a mut World,
+    _world: &'a mut World,
 
     settings: &'a mut settings::Settings,
     assets: &'a mut assets::Assets,
@@ -157,6 +157,10 @@ impl<'a> egui_dock::TabViewer for EditorTabViewer<'a> {
             }
         }
     }
+
+    fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
+        egui::Id::new("unikalne_id_zakladki") 
+    }
 }
 
 
@@ -170,12 +174,16 @@ pub fn editor_set_viewport_texture_id(world: &mut World, id: TextureId) {
 
 pub fn editor_update(world: &mut World) {
 
-    let delta = world.get_resource::<Delta>().expect("delta not found").delta;
-
     let mut dock_state = world.remove_resource::<EditorState>().unwrap_or_else(EditorState::load_or_default);
 
-    egui::TopBottomPanel::top("top_menu_bar").show(&ui(), |ui| {
-        egui::menu::bar(ui, |ui| {
+    //egui::CentralPanel::default().show(&ui(), |ui| {
+    egui::Window::new("Główne Menu")
+        .title_bar(false)
+        .resizable(false) 
+        .anchor(egui::Align2::LEFT_TOP, [0.0, 0.0])
+        .frame(egui::Frame::new().inner_margin(4.0)) 
+        .show(&ui(), |ui| {
+        ui.menu_bar(|ui| {
             ui.menu_button("windows", |ui| {
                 
                 let tabs_to_toggle = [
@@ -204,31 +212,34 @@ pub fn editor_update(world: &mut World) {
 
             ui.horizontal(|ui| {
                 if ui.button("play").clicked() {
-                    bake(&dock_state).unwrap();
-                    let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
+                    if let Err(e) = bake(&dock_state) {
+                        println!("{}", e);
+                    } else {
+                        let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
+                    }                    
                 }
                 if ui.button("play no bake").clicked() {
                     let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
                 }
                 if ui.button("bake").clicked() {
-                    bake(&dock_state).unwrap();
+                    if let Err(e) = bake(&dock_state) {
+                        println!("{}", e);
+                    }
                 }
             });      
         });
     });
 
-    egui::CentralPanel::default().show(&ui(), |ui| {
-        let mut tab_viewer = EditorTabViewer { 
-            world, 
-            settings: &mut dock_state.settings,
-            assets: &mut dock_state.assets,
-            inspector: &mut dock_state.inspector,
+    let mut tab_viewer = EditorTabViewer { 
+        _world: world, 
+        settings: &mut dock_state.settings,
+        assets: &mut dock_state.assets,
+        inspector: &mut dock_state.inspector,
 
-            viewportid: dock_state.viewportid
-        };
-        
-        egui_dock::DockArea::new(&mut dock_state.tree).style(egui_dock::Style::from_egui(ui.style())).show_inside(ui, &mut tab_viewer);
-    });
+        viewportid: dock_state.viewportid
+    };
+    
+    egui_dock::DockArea::new(&mut dock_state.tree).style(egui_dock::Style::from_egui(&ui().style())).show_inside(&ui(), &mut tab_viewer);
 
     world.insert_resource(dock_state);
 }

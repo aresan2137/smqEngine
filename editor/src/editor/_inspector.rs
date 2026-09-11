@@ -58,6 +58,8 @@ impl Inspector {
                 ubo(path, ui);
             } else if ext == "wgsl" {
                 wgsl(path, ui);
+            } else if ext == "mat" {
+                mat(path, ui);
             } else if ext == "bindGroup" {
                 bind_group(path, ui);
             } else {
@@ -73,7 +75,7 @@ impl Inspector {
     }
 }
 
-pub fn process_common_file_descriptor(path: &PathBuf) -> (PathBuf, PathBuf) {
+pub fn process_common_file_descriptor(path: &Path) -> (PathBuf, PathBuf) {
     let is_valid_json = match fs::read_to_string(path) {
         Ok(contents) => serde_json::from_str::<CommonFileDescriptor>(&contents).is_ok(),
         Err(_) => false
@@ -649,7 +651,6 @@ fn ubo(path: &PathBuf, ui: &mut egui::Ui) {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
 pub struct WgslJson {
-    pub bindgroups: [Option<BindGroupGroupJson>; 4],
     pub culling: String,
     pub is_full: bool,
     pub write_depth: bool,
@@ -662,7 +663,6 @@ pub struct WgslJson {
 impl Default for WgslJson {
     fn default() -> Self {
         Self {
-            bindgroups: [None, None, None, None],
             culling: "None".to_string(),
             is_full: true,
             write_depth: true,
@@ -678,43 +678,6 @@ fn wgsl(path: &PathBuf, ui: &mut egui::Ui) {
     let (_, json_path) = process_common_file_descriptor(path);
 
     let mut wgsl_json: WgslJson = if let Ok(contents) = fs::read_to_string(&json_path) { if let Ok(file) = serde_json::from_str(&contents) { file } else { WgslJson::default() } } else { WgslJson::default() };
-
-    for i in 0..4 {
-        ui.label(format!("bind group {}:", i));
-
-        if ui.button("clear").clicked() {
-            wgsl_json.bindgroups[i] = None;
-        }
-
-        let (drop_rect, drop_response) = ui.allocate_exact_size(
-            egui::vec2(200.0, 30.0), 
-            egui::Sense::hover()
-        );
-
-        let bg_color = if drop_response.dnd_hover_payload::<std::path::PathBuf>().is_some() {
-            egui::Color32::from_rgb(100, 150, 200)
-        } else {
-            egui::Color32::from_rgb(50, 50, 50)
-        };
-        
-        ui.painter().rect_filled(drop_rect, 4.0, bg_color);
-        ui.painter().rect_stroke(drop_rect, 4.0, egui::Stroke::new(1.0, egui::Color32::GRAY), egui::StrokeKind::Inside);
-
-        ui.put(drop_rect, egui::Label::new( if let Some(vare) = &wgsl_json.bindgroups[i] {format!("file:{}", vare.potential_path)} else {"drop file here".to_string()}).selectable(false));
-
-        if let Some(dropped_path) = drop_response.dnd_release_payload::<std::path::PathBuf>() {
-            wgsl_json.bindgroups[i] = Some(BindGroupGroupJson {
-                potential_path: dropped_path.as_ref().display().to_string(), 
-                render_texture_id: 0,
-                standard_getter_id: 0,
-                visibility_compute: false,
-                visibility_vertex: false,
-                visibility_fragment: false
-            });            
-        }
-    }
-
-    ui.separator();
 
     ui.push_id(0, |ui| {
         ui.horizontal(|ui| {
@@ -772,6 +735,16 @@ fn wgsl(path: &PathBuf, ui: &mut egui::Ui) {
     if let Some(parent) = json_path.parent() {
         let _ = fs::create_dir_all(parent);
     }
+
+    let json_string = serde_json::to_string(&wgsl_json).unwrap();
+    fs::write(json_path, json_string).expect("failed to save mat json");    
+}
+
+fn mat(path: &PathBuf, ui: &mut egui::Ui) {
+    let (_, json_path) = process_common_file_descriptor(path);
+
+    let mut wgsl_json: WgslJson = if let Ok(contents) = fs::read_to_string(&json_path) { if let Ok(file) = serde_json::from_str(&contents) { file } else { WgslJson::default() } } else { WgslJson::default() };
+
 
     let json_string = serde_json::to_string(&wgsl_json).unwrap();
     fs::write(json_path, json_string).expect("failed to save mat json");    

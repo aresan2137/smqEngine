@@ -10,11 +10,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new<D>(context: &Context<D>, data: &[u8], stride: u64, label: Option<&str>) -> Result<Self, Box<dyn Error>> {
-        return Mesh::new_with_custom_buffer_usages(context, data, stride, label, BufferUsages::COPY_DST | BufferUsages::VERTEX);
-    }
-
-    pub fn new_with_custom_buffer_usages<D>(context: &Context<D>, data: &[u8], stride: u64, label: Option<&str>, usage: BufferUsages) -> Result<Self, Box<dyn Error>> {
+    pub fn new(context: &Context, data: &[u8], stride: u64, label: Option<&str>, usage: BufferUsages) -> Result<Self, Box<dyn Error>> {
         if data.len() < 9 || data[0] != 0b10110000 {
             return Err("failed to parse smf file: file too short".into());
         }
@@ -36,14 +32,14 @@ impl Mesh {
 
         let buffer_size = verts_data_size as u64;
 
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor {
+        let buffer = context.device.create_buffer(&BufferDescriptor {
             label,
             mapped_at_creation: false,
             size: buffer_size,
             usage 
         });
 
-        context.holding.as_ref().unwrap().queue.write_buffer(&buffer, 0, vertex_data);
+        context.queue.write_buffer(&buffer, 0, vertex_data);
 
         return Ok(Self {
             vertex_count: vertex_count as u32,
@@ -51,15 +47,15 @@ impl Mesh {
         });
     }
 
-    pub fn from_raw_data<D>(context: &Context<D>, vertex_count: u32, vertex_data: &[u8], label: Option<&str>, usage: BufferUsages) -> Self {
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&wgpu::BufferDescriptor {
+    pub fn from_raw_data(context: &Context, vertex_count: u32, vertex_data: &[u8], label: Option<&str>, usage: BufferUsages) -> Self {
+        let buffer = context.device.create_buffer(&wgpu::BufferDescriptor {
             label,
             mapped_at_creation: false,
             size: vertex_data.len() as u64,
             usage
         });
 
-        context.holding.as_ref().unwrap().queue.write_buffer(&buffer, 0, vertex_data);
+        context.queue.write_buffer(&buffer, 0, vertex_data);
 
         return Self { 
             vertex_count,
@@ -81,7 +77,7 @@ impl Mesh {
             },
             entry: BindGroupEntry { 
                 binding: 0, 
-                resource: self.buffer.as_entire_binding()
+                resource: self.buffer.as_entire_binding() 
             }
         };
     }

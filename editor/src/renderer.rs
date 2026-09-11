@@ -9,9 +9,7 @@ use glam::*;
 pub struct Renderer {
     pub gen_assets: gen_bake::GenAssets,
     mesh1: Mesh,
-    mat1: Material,
-    blitinfo: BlitInfo,
-    glob_bind_1: BindGroupS,
+    mat1: RenderMaterial,
     bind_group0: BindGroupS,
     bind_group1: BindGroupS,
     bind_group2: BindGroupS
@@ -31,9 +29,9 @@ impl Renderer {
             32, None, BufferUsages::COPY_DST | BufferUsages::VERTEX
         ).unwrap();
 
-        let vert_layout = Material::get_default_vert_layout();
-
-        let mat_module1 = Material::crate_shader_module(context, "
+        let mat_module1 = context.device.create_shader_module(ShaderModuleDescriptor { 
+            label: None, 
+            source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed( "
 struct UboData0 {
     proj: mat4x4f
 }
@@ -81,7 +79,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let lit = max(dit, 0.0);
 
     return vec4f(lit, lit, lit, 1.0); 
-}");
+}"))
+        });
 
         let bind_group0 = BindGroupS::new(context, &[
             gen_assets.renderer_ubodata0_ubo.get_binding(ShaderStages::VERTEX)
@@ -95,26 +94,83 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
             gen_assets.renderer_ubodata2_ubo.get_binding(ShaderStages::VERTEX)
         ], None);
 
-        let mat1 = Material::new(context, Some(Face::Back), None, &gen_assets.renderer_main_renderTexture, mat_module1, vert_layout, CompareFunction::Less, [
-            Some(&bind_group0),
-            Some(&bind_group1),
-            Some(&bind_group2),
-            None
-        ]);
+        let mat_laouuuu = context.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
+            label: None, 
+            bind_group_layouts: &[
+                Some(&bind_group0.bind_group_layout),
+                Some(&bind_group1.bind_group_layout),
+                Some(&bind_group2.bind_group_layout),
+                None
+            ],
+            immediate_size: 0 
+        });
 
-        let glob_bind_1 = BindGroupS::new(context, &[
-            gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT),
-            gen_assets.renderer_main_renderTexture.attachments[0].get_sampler_binding(ShaderStages::FRAGMENT)
-        ], None);
-
-        let blitinfo = context.create_blit_pipeline(&glob_bind_1);
+        let mat1 = context.device.create_render_pipeline(&RenderPipelineDescriptor { 
+            label: None,
+            layout: Some(&mat_laouuuu),
+            vertex: VertexState {
+                module: &mat_module1,
+                entry_point: Some("vs_main"),
+                compilation_options: PipelineCompilationOptions::default(),
+                buffers: &[
+                    Some(VertexBufferLayout { 
+                        array_stride: 0, 
+                        step_mode: VertexStepMode::Vertex, 
+                        attributes: &[
+                            VertexAttribute { 
+                                format: VertexFormat::Float32x3,
+                                offset: 0,
+                                shader_location: 0
+                            },
+                            VertexAttribute { 
+                                format: VertexFormat::Float32x2,
+                                offset: 12,
+                                shader_location: 1
+                            },
+                            VertexAttribute { 
+                                format: VertexFormat::Float32x3,
+                                offset: 20,
+                                shader_location: 2
+                            }
+                        ]
+                    })
+                ]
+            }, 
+            primitive: PrimitiveState { 
+                topology: PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: FrontFace::Ccw,
+                cull_mode: None,
+                unclipped_depth: false,
+                polygon_mode: PolygonMode::Fill,
+                conservative: false
+            }, 
+            depth_stencil: Some(DepthStencilState { 
+                format: TextureFormat::Depth32Float,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(CompareFunction::Less),
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default()
+            }), 
+            multisample: MultisampleState { 
+                count: 1, 
+                mask: !0, 
+                alpha_to_coverage_enabled: false 
+            }, 
+            fragment: Some(FragmentState { 
+                module: &mat_module1,
+                entry_point: Some("fs_main"),
+                compilation_options: PipelineCompilationOptions::default(),
+                targets: &[Some(ColorTargetState { format: TextureFormat::Rgba8Unorm, blend: None, write_mask: ColorWrites::ALL })]
+            }), 
+            multiview_mask: None, 
+            cache: None
+        });
 
         return Self {
             gen_assets,
             mesh1,
             mat1,
-            blitinfo,
-            glob_bind_1,
             bind_group0,
             bind_group1,
             bind_group2
@@ -143,11 +199,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
         self.prep_data(context, world);
 
-        if let Ok(mut frame) = context.start_frame() {  
+        if let Some(mut frame) = context.start_frame() {  
+
+            //context.clear_surface(&mut frame);
+
             {
                 let mut render_pass = context.get_render_pass(&mut frame, &self.gen_assets.renderer_main_renderTexture);
 
-                self.mat1.set_render_material(&mut render_pass);
+                render_pass.set_pipeline(&mut self.mat1);
 
                 render_pass.set_vertex_buffer(0, self.mesh1.buffer.slice(..));
 

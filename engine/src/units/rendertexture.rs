@@ -16,9 +16,8 @@ pub struct RenderTexture {
     pub depth_texture: Option<(Texture, TextureView, TextureFormat)>
 }
 
-#[allow(dead_code)]
 impl RenderTexture {
-    pub fn new(context: &Context, width: u32, height: u32, attachments_data: &[(TextureFormat, TextureUsages, Option<&str>)], depth_data: Option<(TextureFormat, TextureUsages, Option<&str>)>) -> Self {
+    pub fn new<D>(context: &Context<D>, width: u32, height: u32, attachments_data: &[(TextureFormat, TextureUsages, Option<&str>)], depth_data: Option<(TextureFormat, TextureUsages, Option<&str>)>) -> Self {
         let size = Extent3d {
             width,
             height,
@@ -28,7 +27,7 @@ impl RenderTexture {
         let mut attachments = Vec::new();
 
         for attachment in attachments_data.iter() {
-            let texture = context.device.create_texture(&TextureDescriptor {
+            let texture = context.holding.as_ref().unwrap().device.create_texture(&TextureDescriptor {
                 label: attachment.2,
                 size,
                 mip_level_count: 1,
@@ -44,14 +43,14 @@ impl RenderTexture {
                 ..Default::default()
             });
             
-            let sampler = context.device.create_sampler(&SamplerDescriptor {
+            let sampler = context.holding.as_ref().unwrap().device.create_sampler(&SamplerDescriptor {
                 label: attachment.2,
                 address_mode_u: AddressMode::ClampToEdge,
                 address_mode_v: AddressMode::ClampToEdge,
                 address_mode_w: AddressMode::ClampToEdge,
                 mag_filter: FilterMode::Nearest,
                 min_filter: FilterMode::Nearest,
-                mipmap_filter: FilterMode::Nearest,
+                mipmap_filter: MipmapFilterMode::Nearest,
                 ..Default::default()
             });
 
@@ -66,7 +65,7 @@ impl RenderTexture {
         let mut depth_texture = None;
 
         if let Some(depth) = depth_data {            
-            let tex = context.device.create_texture(&TextureDescriptor {
+            let tex = context.holding.as_ref().unwrap().device.create_texture(&TextureDescriptor {
                 label: depth.2,
                 size,
                 mip_level_count: 1,
@@ -112,14 +111,19 @@ impl RenderTexture {
         }
     }
 
-    pub fn create_egui_texture_id(&self, context: &mut Context, attachment: i32, filter: FilterMode) -> egui::TextureId {
+    pub fn create_egui_texture_id<D>(&self, context: &mut Context<D>, attachment: i32, filter: FilterMode) -> egui::TextureId {
         let view = if attachment == -1 {
             &self.depth_texture.as_ref().expect("tried to get egui TextureID for depth when depth doesn't exist").1
         } else {
             &self.attachments[attachment as usize].view
         };
 
-        return context.egui_renderer.register_native_texture(&context.device, view, filter);
+        let holding = context.holding.as_mut().unwrap();
+        return holding.egui_renderer.register_native_texture(
+            &mut holding.device,
+            view,
+            filter,
+        );
     }
 }
 
