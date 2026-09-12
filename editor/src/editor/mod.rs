@@ -1,124 +1,90 @@
-use std::process::Command;
+use std::{fs, path::{Path, PathBuf}};
 
 use bevy_ecs::prelude::*;
-use egui::TextureId;
-use crate::bake::bake;
-use smq_engine::*;
+use egui_dock::{DockState, NodeIndex, TabViewer};
+use egui::{TextureId, Ui, WidgetText};
+use serde::{Deserialize, Serialize};
+use smq_engine::{drop_point, ui};
 
-mod settings;
+use crate::editor::settings::Settings;
+
 mod assets;
-pub mod inspector;
+mod settings;
 
-const LAYOUT_FILE_PATH: &str = "smq_proj/editor_layout.json";
 
-#[derive(Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum EditorTabs {
-    Viewport,
-    Inspector,
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum EditorTab {
     Assets,
-    SceneView,
+    Inspector,
+    Viewport,
+    Scene,
     Settings
 }
 
-#[derive(Resource)]
-pub struct EditorState {
-    pub tree: egui_dock::DockState<EditorTabs>,
+impl EditorTab {
+    pub fn name(&self) -> &'static str {
+        match self {
+            EditorTab::Assets => "assets",
+            EditorTab::Inspector => "inspector",
+            EditorTab::Viewport => "viewport",
+            EditorTab::Scene => "scene",
+            EditorTab::Settings => "settings"
+        }
+    }
 
-    pub settings: settings::Settings,
-    pub assets: assets::Assets,
-    pub inspector: inspector::Inspector,
-
-    pub viewportid: Option<TextureId>
+    pub fn all() -> [EditorTab; 5] {
+        [EditorTab::Assets, EditorTab::Inspector, EditorTab::Viewport, EditorTab::Scene, EditorTab::Settings]
+    }
 }
 
-struct EditorTabViewer<'a> {
-    _world: &'a mut World,
+pub fn save_layout(dock_state: &EditorState) {
+    if let Ok(serialized) = serde_json::to_string_pretty(&dock_state.state) {
+        let _ = fs::write("smq_proj/layout.json", serialized);
+    }
+}
 
-    settings: &'a mut settings::Settings,
+pub fn load_layout() -> EditorState {
+    if let Ok(contents) = fs::read_to_string("smq_proj/layout.json") {
+        if let Ok(deserialized) = serde_json::from_str(&contents) {
+            return EditorState { 
+                state: deserialized,
+                ..Default::default()
+            };
+        }
+    }
+    
+    return EditorState::default();
+}
+
+pub struct EditorViewer<'a> {
+    pub world: &'a mut World,
+
+    viewportid: Option<TextureId>,
+
     assets: &'a mut assets::Assets,
-    inspector: &'a mut inspector::Inspector,
-
-    viewportid: Option<TextureId>
+    settings: &'a mut settings::Settings
 }
 
-impl Default for EditorState {
-    fn default() -> Self {
-        let mut tree = egui_dock::DockState::new(vec![EditorTabs::Viewport]);
-        
-        let [viewport_node, _hierarchy_node] = tree.main_surface_mut().split_left(
-            egui_dock::NodeIndex::root(),
-            0.2,
-            vec![EditorTabs::Inspector],
-        );
+impl<'a> TabViewer for EditorViewer<'a> {
+    type Tab = EditorTab;
 
-        tree.main_surface_mut().split_below(
-            viewport_node,
-            0.5, 
-            vec![EditorTabs::Assets]
-        );
-
-        Self { 
-            tree, 
-            settings: settings::Settings::load(),
-            assets: assets::Assets::default(),
-            inspector: inspector::Inspector::default(),
-            viewportid: None
-        }
+    fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
+        egui::Id::new(tab)
     }
-}
 
-impl EditorState {
-    pub fn load_or_default() -> Self {
-        if let Ok(json_string) = std::fs::read_to_string(LAYOUT_FILE_PATH) {
-            if let Ok(saved_tree) = serde_json::from_str::<egui_dock::DockState<EditorTabs>>(&json_string) {
-                return Self { 
-                    tree: saved_tree, 
-                    settings: settings::Settings::load(),
-                    assets: assets::Assets::default(),
-                    inspector: inspector::Inspector::default(),
-                    viewportid: None
-                };
-            }
-        }
-        
-        Self::default()
+    fn title(&mut self, tab: &mut Self::Tab) -> WidgetText {
+        tab.name().into()
     }
-}
 
-pub fn save_editor_layout(world: &World) {
-    if let Some(dock_state) = world.get_resource::<EditorState>() {
-        match serde_json::to_string_pretty(&dock_state.tree) {
-            Ok(json_string) => {
-                if let Err(e) = std::fs::write(LAYOUT_FILE_PATH, json_string) {
-                    eprintln!("failed to save layout: {}", e);
-                }
-            }
-            Err(e) => eprintln!("failed to parce layout: {}", e),
-        }
-    }
-}
-
-impl<'a> egui_dock::TabViewer for EditorTabViewer<'a> {
-    type Tab = EditorTabs;
-
-    fn title(&mut self, tab: &mut Self::Tab) -> egui::WidgetText {
+    fn ui(&mut self, ui: &mut Ui, tab: &mut Self::Tab) {
         match tab {
-            EditorTabs::Viewport => "viewport".into(),
-            EditorTabs::Inspector => "inspector".into(),
-            EditorTabs::Assets => "assets".into(),
-            EditorTabs::SceneView => "sceneview".into(),
-            EditorTabs::Settings => "settings".into()
-        }
-    }
-
-    fn scroll_bars(&self, _tab: &Self::Tab) -> [bool; 2] {
-        return [true, true];
-    }
-
-    fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Self::Tab) {
-        match tab {
-            EditorTabs::Viewport => {
-                
+            EditorTab::Assets => { 
+                self.assets.egui(ui);
+            }
+            EditorTab::Inspector => { 
+                ui.label("lakaka");
+            }
+            EditorTab::Viewport => { 
                 if let Some(texture_id) = self.viewportid {
                     let available_size = ui.available_size();
                     let target_aspect = 16.0 / 9.0;
@@ -141,105 +107,232 @@ impl<'a> egui_dock::TabViewer for EditorTabViewer<'a> {
                 } else {
                     ui.label("viewportId = None");
                 }
-
             }
-            EditorTabs::Inspector => {
-                self.inspector.egui(ui, &mut self.assets);
+            EditorTab::Scene => { 
+                ui.label("lakaka"); 
             }
-            EditorTabs::Assets => {
-                self.assets.egui(ui);
-            }
-            EditorTabs::SceneView => {
-                ui.label("testiog");
-            }
-            EditorTabs::Settings => {
+            EditorTab::Settings => { 
                 self.settings.egui(ui);
             }
         }
     }
+}
 
-    fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
-        egui::Id::new("unikalne_id_zakladki") 
+#[derive(Resource)]
+pub struct EditorState {
+    pub state: DockState<EditorTab>,
+
+    viewportid: Option<TextureId>,
+    hovered_menu: Option<&'static str>,
+    menu_popup_rect: Option<egui::Rect>,
+
+    pub assets: assets::Assets,
+    pub settings: settings::Settings
+}
+
+impl Default for EditorState {
+    fn default() -> Self {
+        let mut state = DockState::new(vec![EditorTab::Assets]);
+        let surface = state.main_surface_mut();
+        
+        let [left, right] = surface.split_right(NodeIndex::root(), 0.7, vec![EditorTab::Inspector]);
+        
+        surface.split_below(right, 0.5, vec![EditorTab::Scene]);
+        surface.split_below(left, 0.5, vec![EditorTab::Viewport, EditorTab::Settings]);
+
+        Self { 
+            state,
+            viewportid: None,
+            hovered_menu: None,
+            menu_popup_rect: None,
+            assets: assets::Assets::default(),
+            settings: Settings::load()
+        }
     }
 }
 
-
 pub fn editor_set_viewport_texture_id(world: &mut World, id: TextureId) {
-    let mut dock_state = world.remove_resource::<EditorState>().unwrap_or_else(EditorState::load_or_default);
+    if !world.contains_resource::<EditorState>() {
+        world.insert_resource(load_layout());
+    }
 
-    dock_state.viewportid = Some(id);
+    let mut dock_resource = world.remove_resource::<EditorState>().unwrap();
 
-    world.insert_resource(dock_state);
+    dock_resource.viewportid = Some(id);
+
+    world.insert_resource(dock_resource);
 }
 
 pub fn editor_update(world: &mut World) {
+    if !world.contains_resource::<EditorState>() {
+        world.insert_resource(load_layout());
+    }
 
-    let mut dock_state = world.remove_resource::<EditorState>().unwrap_or_else(EditorState::load_or_default);
+    let mut dock_resource = world.remove_resource::<EditorState>().unwrap();
 
-    //egui::CentralPanel::default().show(&ui(), |ui| {
-    egui::Window::new("Główne Menu")
-        .title_bar(false)
-        .resizable(false) 
-        .anchor(egui::Align2::LEFT_TOP, [0.0, 0.0])
-        .frame(egui::Frame::new().inner_margin(4.0)) 
-        .show(&ui(), |ui| {
-        ui.menu_bar(|ui| {
-            ui.menu_button("windows", |ui| {
-                
-                let tabs_to_toggle = [
-                    (EditorTabs::Viewport, "viewport"),
-                    (EditorTabs::Inspector, "inspector"),
-                    (EditorTabs::Assets, "assets"),
-                    (EditorTabs::SceneView, "sceneview"),
-                    (EditorTabs::Settings, "settings")
-                ];
-
-                for (tab_variant, label) in tabs_to_toggle {
-                    let mut is_open = dock_state.tree.find_tab(&tab_variant).is_some();
-                    
-                    if ui.checkbox(&mut is_open, label).clicked() {
-                        if is_open {
-                            dock_state.tree.main_surface_mut().push_to_focused_leaf(tab_variant.clone());
-                        } else {
-                            if let Some(tab_location) = dock_state.tree.find_tab(&tab_variant) {
-                                dock_state.tree.remove_tab(tab_location);
-                            }
-                        }
-                        ui.close_menu();
-                    }
-                }
-            });
-
-            ui.horizontal(|ui| {
-                if ui.button("play").clicked() {
-                    if let Err(e) = bake(&dock_state) {
-                        println!("{}", e);
-                    } else {
-                        let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
-                    }                    
-                }
-                if ui.button("play no bake").clicked() {
-                    let _ = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn().expect("failed to run game");
-                }
-                if ui.button("bake").clicked() {
-                    if let Err(e) = bake(&dock_state) {
-                        println!("{}", e);
-                    }
-                }
-            });      
-        });
-    });
-
-    let mut tab_viewer = EditorTabViewer { 
-        _world: world, 
-        settings: &mut dock_state.settings,
-        assets: &mut dock_state.assets,
-        inspector: &mut dock_state.inspector,
-
-        viewportid: dock_state.viewportid
+    let mut viewer = EditorViewer { 
+        world,
+        viewportid: dock_resource.viewportid,
+        assets: &mut dock_resource.assets,
+        settings: &mut dock_resource.settings
     };
     
-    egui_dock::DockArea::new(&mut dock_state.tree).style(egui_dock::Style::from_egui(&ui().style())).show_inside(&ui(), &mut tab_viewer);
+    if let Some(screen_rect) = ui().input(|i| i.raw.screen_rect) {     
+        egui::Window::new("")
+            .title_bar(false) 
+            .movable(false) 
+            .resizable(false) 
+            .collapsible(false) 
+            .order(egui::Order::Background) 
+            .anchor(egui::Align2::LEFT_TOP, [0.0, 0.0]) 
+            .fixed_size(screen_rect.size())
+            .frame(egui::Frame::default()
+            .fill(ui().options(|o| { o.dark_style.visuals.panel_fill }))
+            .inner_margin(0.0))
+            .show(&ui(), |ui| {
+            
+            ui.vertical(|ui| {
+                egui::Frame::default().inner_margin(egui::Margin::symmetric(8, 0)).show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.style_mut().visuals.button_frame = false;
+                        ui.spacing_mut().interact_size.y = 0.0;
+                        ui.spacing_mut().button_padding = egui::vec2(6.0, 0.0);
 
-    world.insert_resource(dock_state);
+                        let response = ui.add(
+                            egui::Label::new(egui::RichText::new("Windows").size(12.0))
+                                .sense(egui::Sense::hover())
+                                .selectable(false),
+                        );
+
+                        let popup_id = egui::Id::new("windows_menu");
+
+                        if response.hovered() {
+                            dock_resource.hovered_menu = Some("Windows");
+                        }
+
+                        const HOVER_MARGIN: f32 = 20.0;
+                        let pointer_pos = ui.ctx().pointer_latest_pos();
+                        let hovering_popup = match (dock_resource.menu_popup_rect, pointer_pos) {
+                            (Some(r), Some(p)) => r.expand(HOVER_MARGIN).contains(p),
+                            _ => false,
+                        };
+
+                        if dock_resource.hovered_menu == Some("Windows") {
+                            let area = egui::Area::new(popup_id)
+                                .order(egui::Order::Foreground)
+                                .fixed_pos(response.rect.left_bottom())
+                                .show(ui.ctx(), |ui| {
+                                    egui::Frame::popup(ui.style()).show(ui, |ui| {
+                                        ui.set_min_width(160.0);
+
+                                        for tab in EditorTab::all() {
+                                            let path = dock_resource.state.find_tab(&tab);
+                                            let mut open = path.is_some();
+
+                                            if ui.checkbox(&mut open, tab.name()).changed() {
+                                                if open {
+                                                    dock_resource.state.push_to_focused_leaf(tab.clone());
+                                                } else if let Some(loc) = path {
+                                                    dock_resource.state.remove_tab(loc);
+                                                }
+                                            }
+                                        }
+                                    });
+                                });
+
+                            dock_resource.menu_popup_rect = Some(area.response.rect);
+
+                            if area.response.rect.width() > 0.0 && !response.hovered() && !hovering_popup {
+                                dock_resource.hovered_menu = None;
+                                dock_resource.menu_popup_rect = None;
+                            }
+                        } else {
+                            dock_resource.menu_popup_rect = None;
+                        }
+                    });
+                });
+
+                let space = ui.available_size();
+                egui::Frame::default()
+                    .inner_margin(0.0)
+                    .fill(egui::Color32::from_gray(30))
+                    .show(ui, |ui| {
+                        ui.set_min_size(space); 
+                        
+                        egui_dock::DockArea::new(&mut dock_resource.state).show_inside(ui, &mut viewer);
+                    });
+                    
+            });
+            
+        });
+    }
+
+    world.insert_resource(dock_resource);
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CommonFileDescriptor {
+    pub file_path: String,
+    pub json_path: String
+}
+
+pub fn process_common_file_descriptor(path: &Path) -> (PathBuf, PathBuf) {
+    let is_valid_json = match fs::read_to_string(path) {
+        Ok(contents) => serde_json::from_str::<CommonFileDescriptor>(&contents).is_ok(),
+        Err(_) => false
+    };
+
+    let path_str = path.display().to_string().replace('\\', "/");
+    
+    let rest = if let Some(idx) = path_str.find("smq_proj/assets/") {
+        &path_str[idx + "smq_proj/assets/".len()..]
+    } else {
+        panic!("error: filepath doesn't start with smq_proj/assets/': {:?}", path);
+    };
+
+    let new_file_path = PathBuf::from("smq_proj/data/file").join(rest);
+    let new_json_path = PathBuf::from("smq_proj/data/json").join(rest);
+
+    if !is_valid_json {
+        if path.exists() {
+            if let Some(parent) = new_file_path.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            if let Err(_) = fs::rename(path, &new_file_path) {
+                if fs::copy(path, &new_file_path).is_ok() {
+                    let _ = fs::remove_file(path);
+                }
+            }
+        }
+    } else {
+        if let Ok(contents) = fs::read_to_string(path) {
+            if let Ok(descriptor) = serde_json::from_str::<CommonFileDescriptor>(&contents) {
+                let new_file_path_str = new_file_path.display().to_string();
+                if descriptor.file_path != new_file_path_str && Path::new(&descriptor.file_path).exists() {
+                    if let Some(parent) = new_file_path.parent() {
+                        let _ = fs::create_dir_all(parent);
+                    }
+                    let _ = fs::rename(&descriptor.file_path, &new_file_path);
+                }
+
+                let new_json_path_str = new_json_path.display().to_string();
+                if descriptor.json_path != new_json_path_str && Path::new(&descriptor.json_path).exists() {
+                    if let Some(parent) = new_json_path.parent() {
+                        let _ = fs::create_dir_all(parent);
+                    }
+                    let _ = fs::rename(&descriptor.json_path, &new_json_path);
+                }
+            }
+        }
+    }
+
+    let updated_descriptor = CommonFileDescriptor { 
+        file_path: new_file_path.display().to_string(), 
+        json_path: new_json_path.display().to_string()
+    };    
+
+    let json_string = serde_json::to_string_pretty(&updated_descriptor).unwrap();
+    fs::write(path, json_string).expect("failed to save common file descriptor file");
+
+    (new_file_path, new_json_path)
 }

@@ -1,0 +1,194 @@
+{
+  "surfaces": [
+    {
+      "Main": {
+        "nodes": [
+          {
+            "Horizontal": {
+              "rect": {
+                "min": {
+                  "x": 0.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 1280.0,
+                  "y": 720.0
+                }
+              },
+              "fraction": 0.7677084,
+              "fully_collapsed": false,
+              "collapsed_leaf_count": 0
+            }
+          },
+          {
+            "Horizontal": {
+              "rect": {
+                "min": {
+                  "x": 0.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 720.0
+                }
+              },
+              "fraction": 0.2306121,
+              "fully_collapsed": false,
+              "collapsed_leaf_count": 0
+            }
+          },
+          {
+            "Leaf": {
+              "rect": {
+                "min": {
+                  "x": 983.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 1280.0,
+                  "y": 720.0
+                }
+              },
+              "viewport": {
+                "min": {
+                  "x": 983.0,
+                  "y": 45.0
+                },
+                "max": {
+                  "x": 1280.0,
+                  "y": 720.0
+                }
+              },
+              "tabs": [
+                "Inspector"
+              ],
+              "active": 0,
+              "scroll": 0.0,
+              "collapsed": false,
+              "tab_bar_hidden": false
+            }
+          },
+          {
+            "Leaf": {
+              "rect": {
+                "min": {
+                  "x": 0.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 226.0,
+                  "y": 720.0
+                }
+              },
+              "viewport": {
+                "min": {
+                  "x": 0.0,
+                  "y": 45.0
+                },
+                "max": {
+                  "x": 226.0,
+                  "y": 720.0
+                }
+              },
+              "tabs": [
+                "Scene"
+              ],
+              "active": 0,
+              "scroll": 0.0,
+              "collapsed": false,
+              "tab_bar_hidden": false
+            }
+          },
+          {
+            "Vertical": {
+              "rect": {
+                "min": {
+                  "x": 227.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 720.0
+                }
+              },
+              "fraction": 0.48362124,
+              "fully_collapsed": false,
+              "collapsed_leaf_count": 0
+            }
+          },
+          "Empty",
+          "Empty",
+          "Empty",
+          "Empty",
+          {
+            "Leaf": {
+              "rect": {
+                "min": {
+                  "x": 227.0,
+                  "y": 21.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 359.0
+                }
+              },
+              "viewport": {
+                "min": {
+                  "x": 227.0,
+                  "y": 45.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 359.0
+                }
+              },
+              "tabs": [
+                "Viewport"
+              ],
+              "active": 0,
+              "scroll": 0.0,
+              "collapsed": false,
+              "tab_bar_hidden": false
+            }
+          },
+          {
+            "Leaf": {
+              "rect": {
+                "min": {
+                  "x": 227.0,
+                  "y": 360.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 720.0
+                }
+              },
+              "viewport": {
+                "min": {
+                  "x": 227.0,
+                  "y": 384.0
+                },
+                "max": {
+                  "x": 982.0,
+                  "y": 720.0
+                }
+              },
+              "tabs": [
+                "Assets",
+                "Settings"
+              ],
+              "active": 1,
+              "scroll": 0.0,
+              "collapsed": false,
+              "tab_bar_hidden": false
+            }
+          }
+        ],
+        "focused_node": 9,
+        "collapsed": false,
+        "collapsed_leaf_count": 0
+      }
+    }
+  ],
+  "focused_surface": 0
+}

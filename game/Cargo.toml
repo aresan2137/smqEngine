@@ -21,7 +21,6 @@ log = "0.4"
 egui = { version = "0.36" }
 egui-winit = { version = "0.36", default-features = false, features = ["links"]}
 egui-wgpu = { version = "0.36" }
-env_logger = "0.11.11"
 bevy_ecs = "0.19"
 web-time = "1.1"
 

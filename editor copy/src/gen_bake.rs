@@ -57,7 +57,7 @@ pub struct GenAssets {
 }
 
 impl GenAssets {
-    pub fn init_gen_assets<D>(context: &Context<D>) -> Self {
+    pub fn init_gen_assets(context: &Context) -> Self {
         let renderer_main_renderTexture = RenderTexture::new(
             context,
             1280,

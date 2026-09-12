@@ -5,12 +5,6 @@ use smq_engine::*;
 
 use wgpu::*;
 
-mod code;
-use code::*;
-
-mod renderer;
-use renderer::*;
-
 mod gen_bake;
 
 #[cfg(target_arch = "wasm32")]
@@ -26,6 +20,7 @@ pub fn fps_logger(time: Res<Delta>) {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
+#[allow(unused)]
 fn main() {    
     logger::init();
     
@@ -50,7 +45,12 @@ fn main() {
 
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
-    let mut context: Context<'_, Renderer> = Context::new(world, schedule, render, load_assets);
+    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextEvents { 
+        renderer: Some(render), 
+        on_wgpu_load: Some(load_assets), 
+        pre_schedule: None,
+        on_exit: None
+    });
 
     event_loop.run_app(&mut context).unwrap();
 }

@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{path::PathBuf, sync::{Arc, OnceLock}};
 
 use wgpu::*;
 
@@ -8,6 +8,31 @@ pub fn ui() -> egui::Context {
     static CTX: OnceLock<egui::Context> = OnceLock::new();
     CTX.get_or_init(|| egui::Context::default()).clone()
 }
+
+pub fn drop_point(ui: &mut egui::Ui, existing: Option<String>, pre: impl FnOnce(&mut egui::Ui), post: impl FnOnce(&mut egui::Ui, Option<Arc<PathBuf>>)) {
+    ui.horizontal(|ui| {
+        pre(ui);
+
+        let (drop_rect, drop_response) = ui.allocate_exact_size(
+            egui::vec2(200.0, 30.0), 
+            egui::Sense::hover()
+        );
+
+        let bg_color = if drop_response.dnd_hover_payload::<PathBuf>().is_some() {
+            egui::Color32::from_rgb(100, 150, 200)
+        } else {
+            egui::Color32::from_rgb(50, 50, 50)
+        };
+        
+        ui.painter().rect_filled(drop_rect, 4.0, bg_color);
+        ui.painter().rect_stroke(drop_rect, 4.0, egui::Stroke::new(1.0, egui::Color32::GRAY), egui::StrokeKind::Inside);
+
+        ui.put(drop_rect, egui::Label::new( if let Some(var) = existing {format!("file:{var}")} else {"drop file here".to_string()}).selectable(false));
+
+        post(ui, drop_response.dnd_release_payload::<PathBuf>());
+    });
+}
+
 
 impl<D> Context<'_, D> {
     pub fn start_egui_record(&mut self) {

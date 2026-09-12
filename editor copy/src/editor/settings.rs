@@ -1,7 +1,8 @@
 use std::fs;
 
 use serde::{Deserialize, Serialize};
-use smq_engine::drop_point;
+
+use crate::drop_point;
 
 #[derive(Serialize, Deserialize)]
 pub struct BakeSettings {

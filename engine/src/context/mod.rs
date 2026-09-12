@@ -4,6 +4,7 @@ use bevy_ecs::prelude::*;
 use egui_wgpu::RendererOptions;
 use wgpu::*;
 use winit::{application::ApplicationHandler, dpi::PhysicalSize, event::{DeviceEvent, DeviceId, WindowEvent}, event_loop::ActiveEventLoop, keyboard::PhysicalKey, window::{Window, WindowId}};
+use winit::event_loop::EventLoopProxy;
 
 use crate::{Delta, Inputs, f11_system};
 
@@ -22,36 +23,45 @@ pub struct Context<'a, D> {
     pub world: World,
     pub schedule: Schedule,
     is_minimized: bool,
-    renderer: fn(&mut Context<D>, ::egui::FullOutput),
-    on_wgpu_load: fn(&mut Context<D>),
-    pub surface: Option<Surface<'a>>,
+    events: ContextEvents<D>,
+    pub surface: Option<Arc<Surface<'a>>>,
     pub holding: Option<ContextWgpuHolding>,
-    pub data: Option<D>
+    pub data: Option<D>,
+    pub proxy: EventLoopProxy<ContextUserEvent>
+}
+
+#[derive(Default)]
+pub struct ContextEvents<D> {
+    pub renderer: Option<fn(&mut Context<D>, ::egui::FullOutput)>,
+    pub on_wgpu_load: Option<fn(&mut Context<D>)>,
+    pub pre_schedule: Option<fn(&mut Context<D>)>,
+    pub on_exit: Option<fn(&mut Context<D>)>
 }
 
 impl<D> Context<'_, D> {
-    pub fn new(world: World, schedule: Schedule, renderer: fn(&mut Context<D>, ::egui::FullOutput), on_wgpu_load: fn(&mut Context<D>)) -> Self {        
+    pub fn new(world: World, schedule: Schedule, proxy: EventLoopProxy<ContextUserEvent>, events: ContextEvents<D>) -> Self {        
         return Self {
             window: None,
             world,
             schedule,
             is_minimized: false,
-            renderer,
-            on_wgpu_load,
+            events,
             surface: None,
             holding: None,
-            data: None
+            data: None,
+            proxy
         };
     }
 
     pub fn resize(&mut self, new_size: &PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
-            let holding = self.holding.as_mut().unwrap();
-            if holding.surface_config.width != new_size.width || holding.surface_config.height != new_size.height {
-                holding.surface_config.width = new_size.width;
-                holding.surface_config.height = new_size.height;
-                self.surface.as_ref().unwrap().configure(&holding.device, &holding.surface_config);
-            }
+            if let Some(holding) = self.holding.as_mut() {
+                if holding.surface_config.width != new_size.width || holding.surface_config.height != new_size.height {
+                    holding.surface_config.width = new_size.width;
+                    holding.surface_config.height = new_size.height;
+                    self.surface.as_ref().unwrap().configure(&holding.device, &holding.surface_config);
+                }
+            }            
         }
     }
 }
@@ -162,15 +172,17 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
 
             let instance = Instance::default();
 
-            let surface = instance.create_surface(window.clone()).expect("failed to get surface");
+            let surface = Arc::new(instance.create_surface(window.clone()).expect("failed to get surface"));
 
             #[cfg(target_arch = "wasm32")]
             {
-                let event_proxy = event_loop.create_proxy();
+                let event_proxy = self.proxy.clone();
+
                 let window_clone = window.clone();
+                let surface_clone = surface.clone();                
 
                 wasm_bindgen_futures::spawn_local(async move {
-                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(ContextWgpuHolding::new(window.clone(), &instance, &surface)));
+                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(ContextWgpuHolding::new(window_clone, &instance, &surface_clone).await));
                 });
             }
 
@@ -183,7 +195,9 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
             self.window = Some(window);
 
             #[cfg(not(target_arch = "wasm32"))]
-            (self.on_wgpu_load)(self);
+            if let Some(func) = self.events.on_wgpu_load {
+                (func)(self);
+            }            
         }
     }
 
@@ -191,7 +205,9 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
         match event {
             ContextUserEvent::GpuReady(holding) => {
                 self.holding = Some(holding);
-                (self.on_wgpu_load)(self);
+                if let Some(func) = self.events.on_wgpu_load {
+                    (func)(self);
+                }
             }
         }
     }
@@ -218,6 +234,10 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                 f11_system(&self.world, &self.window);
             }
             WindowEvent::CloseRequested => {
+                if let Some(func) = self.events.on_exit {
+                    (func)(self);
+                }
+
                 event_loop.exit();
             }
             WindowEvent::Resized(physical_size) => {
@@ -234,6 +254,10 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
 
                     self.world.get_resource_mut::<Delta>().expect("delta not found").update_delta();
 
+                    if let Some(func) = self.events.pre_schedule {
+                        (func)(self);
+                    }
+
                     self.schedule.run(&mut self.world);
 
                     let mut full_output = self.end_egui_record();
@@ -243,7 +267,9 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                         return; 
                     }
 
-                    (self.renderer)(self, full_output);
+                    if let Some(func) = self.events.renderer {
+                        (func)(self, full_output);
+                    }
 
                     self.world.get_resource_mut::<Inputs>().expect("input not found").end_frame();
                 }
