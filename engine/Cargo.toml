@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 winit = "0.30.0"
 glam = { version = "0.33.6", features = ["bytemuck"] }
-wgpu = "30.0"
+wgpu = { version = "30.0", default-features = false, features = ["webgpu", "vulkan"] }
 image = { version = "0.25.10", default-features = false, features = ["png"] }
 bytemuck = { version = "1.25", features = ["derive"] }
 pollster = "0.4.0"
@@ -27,9 +27,3 @@ console_log = "1.0"
 console_error_panic_hook = "0.1"
 web-sys = { version = "0.3", features = ["Document", "Window", "Element", "HtmlCanvasElement", "Node"] }
 wasm-bindgen-futures = "0.4"
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-strip = true

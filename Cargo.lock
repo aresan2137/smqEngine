@@ -3488,7 +3488,6 @@ dependencies = [
  "glam 0.33.7",
  "image",
  "log",
- "pollster 0.4.0",
  "smq_engine",
  "wasm-bindgen",
  "wasm-bindgen-futures",

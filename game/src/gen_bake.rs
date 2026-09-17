@@ -9,11 +9,11 @@ use wgpu::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata0Ubo {
+pub struct UboData0 {
     pub proj: Mat4,
 }
 
-impl Default for RendererUbodata0Ubo {
+impl Default for UboData0 {
     fn default() -> Self {
         Self {
             proj: Mat4::IDENTITY,
@@ -23,11 +23,11 @@ impl Default for RendererUbodata0Ubo {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata1Ubo {
+pub struct UboData1 {
     pub view: Mat4,
 }
 
-impl Default for RendererUbodata1Ubo {
+impl Default for UboData1 {
     fn default() -> Self {
         Self {
             view: Mat4::IDENTITY,
@@ -37,11 +37,11 @@ impl Default for RendererUbodata1Ubo {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RendererUbodata2Ubo {
+pub struct UboData2 {
     pub model: Mat4,
 }
 
-impl Default for RendererUbodata2Ubo {
+impl Default for UboData2 {
     fn default() -> Self {
         Self {
             model: Mat4::IDENTITY,
@@ -49,41 +49,177 @@ impl Default for RendererUbodata2Ubo {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct UcLight {
+    pub position: Vec3,
+    pub _pad0: [u8; 4],
+    pub color: Vec3,
+    pub power: f32,
+}
+
+impl Default for UcLight {
+    fn default() -> Self {
+        Self {
+            position: Vec3::ZERO,
+            _pad0: [0; 4],
+            color: Vec3::ZERO,
+            power: 0.0,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct UboDefferedInfo {
+    pub camera_position: Vec3,
+    pub light_count: u32,
+    pub lights: [UcLight; 16],
+}
+
+impl Default for UboDefferedInfo {
+    fn default() -> Self {
+        Self {
+            camera_position: Vec3::ZERO,
+            light_count: 0,
+            lights: Default::default(),
+        }
+    }
+}
+
 pub struct GenAssets {
+    pub ubodata0: Ubo<UboData0>,
+    pub ubodata1: Ubo<UboData1>,
+    pub ubodata2: Ubo<UboData2>,
+    pub ubodefferedinfo: Ubo<UboDefferedInfo>,
+    pub lakaka_png: TextureS,
+    pub file_mesh_Cart_smf: Mesh,
+    pub file_mesh_Cube_smf: Mesh,
+    pub file_mesh_Floor_smf: Mesh,
+    pub file_mesh_Walls_smf: Mesh,
     pub renderer_main_renderTexture: RenderTexture,
-    pub renderer_ubodata0_ubo: Ubo<RendererUbodata0Ubo>,
-    pub renderer_ubodata1_ubo: Ubo<RendererUbodata1Ubo>,
-    pub renderer_ubodata2_ubo: Ubo<RendererUbodata2Ubo>,
+    pub renderer_post_renderTexture: RenderTexture,
+    pub blitinfo: BlitInfo,
+    pub blit_group: BindGroupS,
 }
 
 impl GenAssets {
-    pub fn init_gen_assets<D>(context: &Context<D>) -> Self {
+    pub fn init_gen_assets<D>(context: &Context<D>, ssf_data: &[SSFAsset]) -> Self {
+        let mut ubodata0 = Ubo::new(context, UboData0::default());
+        let mut ubodata1 = Ubo::new(context, UboData1::default());
+        let mut ubodata2 = Ubo::new(context, UboData2::default());
+        let mut ubodefferedinfo = Ubo::new(context, UboDefferedInfo::default());
+        let lakaka_png = TextureS::new(
+            context,
+            ssf_data[0].as_ref(),
+            smq_engine::SamplingMode::NearestMapped,
+            4,
+            TextureFormat::Rgba8UnormSrgb,
+            AddressMode::Repeat,
+            Some("lakaka_png"),
+        );
+        let file_mesh_Cart_smf = Mesh::new(
+            context,
+            ssf_data[1].as_ref(),
+            32,
+            Some("file_mesh_Cart_smf"),
+        )
+        .unwrap();
+        let file_mesh_Cube_smf = Mesh::new(
+            context,
+            ssf_data[2].as_ref(),
+            32,
+            Some("file_mesh_Cube_smf"),
+        )
+        .unwrap();
+        let file_mesh_Floor_smf = Mesh::new(
+            context,
+            ssf_data[3].as_ref(),
+            32,
+            Some("file_mesh_Floor_smf"),
+        )
+        .unwrap();
+        let file_mesh_Walls_smf = Mesh::new(
+            context,
+            ssf_data[4].as_ref(),
+            32,
+            Some("file_mesh_Walls_smf"),
+        )
+        .unwrap();
         let renderer_main_renderTexture = RenderTexture::new(
             context,
-            1280,
-            720,
-            &[(
-                TextureFormat::Rgba8Unorm,
-                TextureUsages::RENDER_ATTACHMENT
-                    | TextureUsages::TEXTURE_BINDING
-                    | TextureUsages::empty(),
-                Some("renderer_main_renderTexture_0"),
-            )],
+            384,
+            216,
+            &[
+                (
+                    TextureFormat::Rgba8Unorm,
+                    TextureUsages::RENDER_ATTACHMENT
+                        | TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::empty(),
+                    Some("renderer_main_renderTexture_0"),
+                ),
+                (
+                    TextureFormat::Rgba32Float,
+                    TextureUsages::RENDER_ATTACHMENT
+                        | TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::empty(),
+                    Some("renderer_main_renderTexture_1"),
+                ),
+                (
+                    TextureFormat::Rgba16Float,
+                    TextureUsages::RENDER_ATTACHMENT
+                        | TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::empty(),
+                    Some("renderer_main_renderTexture_2"),
+                ),
+            ],
             Some((
                 TextureFormat::Depth32Float,
                 TextureUsages::RENDER_ATTACHMENT | TextureUsages::empty(),
                 Some("renderer_main_renderTexture_depth"),
             )),
         );
-        let mut renderer_ubodata0_ubo = Ubo::new(context, RendererUbodata0Ubo::default());
-        let mut renderer_ubodata1_ubo = Ubo::new(context, RendererUbodata1Ubo::default());
-        let mut renderer_ubodata2_ubo = Ubo::new(context, RendererUbodata2Ubo::default());
+        let renderer_post_renderTexture = RenderTexture::new(
+            context,
+            384,
+            216,
+            &[(
+                TextureFormat::Rgba8Unorm,
+                TextureUsages::RENDER_ATTACHMENT
+                    | TextureUsages::TEXTURE_BINDING
+                    | TextureUsages::empty(),
+                Some("renderer_post_renderTexture_0"),
+            )],
+            None,
+        );
+
+        let blit_group = BindGroupS::new(
+            context,
+            &[
+                renderer_post_renderTexture.attachments[0]
+                    .get_texture_binding(ShaderStages::FRAGMENT, true),
+                renderer_post_renderTexture.attachments[0]
+                    .get_sampler_binding(ShaderStages::FRAGMENT),
+            ],
+            None,
+        );
+
+        let blitinfo = context.create_blit_pipeline(&blit_group);
 
         return Self {
+            ubodata0,
+            ubodata1,
+            ubodata2,
+            ubodefferedinfo,
+            lakaka_png,
+            file_mesh_Cart_smf,
+            file_mesh_Cube_smf,
+            file_mesh_Floor_smf,
+            file_mesh_Walls_smf,
             renderer_main_renderTexture,
-            renderer_ubodata0_ubo,
-            renderer_ubodata1_ubo,
-            renderer_ubodata2_ubo,
+            renderer_post_renderTexture,
+            blitinfo,
+            blit_group,
         };
     }
 }

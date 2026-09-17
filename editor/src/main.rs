@@ -1,6 +1,9 @@
+use std::{fs, path::{Path, PathBuf}};
+
 use bevy_ecs::prelude::*;
 use glam::*;
 
+use serde::{Deserialize, Serialize};
 use smq_engine::*;
 
 use wgpu::*;
@@ -8,21 +11,12 @@ use wgpu::*;
 mod gen_bake;
 
 mod editor;
+mod bake;
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 use winit::event_loop::EventLoop;
 
 use crate::{editor::{EditorState, editor_set_viewport_texture_id, editor_update, save_layout}, gen_bake::GenAssets};
 
-pub fn fps_logger(time: Res<Delta>) {
-    egui::Window::new("FPS").default_width(400.0).show(&ui(), |ui| {
-        ui.label(format!("fps: {}", 1.0/time.delta));
-    });
-}
-
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-#[allow(unused)]
 fn main() {    
     logger::init();
     
@@ -46,7 +40,9 @@ fn main() {
 
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
-    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextEvents { 
+    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextSettings { 
+        present_mode: PresentMode::AutoVsync 
+    }, ContextEvents { 
         renderer: Some(render), 
         on_wgpu_load: Some(load_assets), 
         pre_schedule: Some(pre_schedule),
@@ -177,10 +173,10 @@ fn load_assets(context: &mut Context<Renderer>) {
     });
 
     let mesh1 = Mesh::new(context, 
-        include_bytes!("../../smq_proj/data/file/mesh/Suzanne.smf"), 32, None).unwrap();
+        include_bytes!("../../smq_proj/data/file/mesh/Cube.smf"), 32, None).unwrap();
 
     let bind_group_blit = BindGroupS::new(context, &[
-        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT),
+        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT, true),
         gen_assets.renderer_main_renderTexture.attachments[0].get_sampler_binding(ShaderStages::FRAGMENT)
     ], None);
 
@@ -251,3 +247,69 @@ fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) {
     context.data = Some(data);
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CommonFileDescriptor {
+    pub file_path: String,
+    pub json_path: String
+}
+
+pub fn process_common_file_descriptor(path: &Path) -> (PathBuf, PathBuf) {
+    let is_valid_json = match fs::read_to_string(path) {
+        Ok(contents) => serde_json::from_str::<CommonFileDescriptor>(&contents).is_ok(),
+        Err(_) => false
+    };
+
+    let path_str = path.display().to_string().replace('\\', "/");
+    
+    let rest = if let Some(idx) = path_str.find("smq_proj/assets/") {
+        &path_str[idx + "smq_proj/assets/".len()..]
+    } else {
+        panic!("error: filepath doesn't start with smq_proj/assets/': {:?}", path);
+    };
+
+    let new_file_path = PathBuf::from("smq_proj/data/file").join(rest);
+    let new_json_path = PathBuf::from("smq_proj/data/json").join(rest);
+
+    if !is_valid_json {
+        if path.exists() {
+            if let Some(parent) = new_file_path.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            if let Err(_) = fs::rename(path, &new_file_path) {
+                if fs::copy(path, &new_file_path).is_ok() {
+                    let _ = fs::remove_file(path);
+                }
+            }
+        }
+    } else {
+        if let Ok(contents) = fs::read_to_string(path) {
+            if let Ok(descriptor) = serde_json::from_str::<CommonFileDescriptor>(&contents) {
+                let new_file_path_str = new_file_path.display().to_string();
+                if descriptor.file_path != new_file_path_str && Path::new(&descriptor.file_path).exists() {
+                    if let Some(parent) = new_file_path.parent() {
+                        let _ = fs::create_dir_all(parent);
+                    }
+                    let _ = fs::rename(&descriptor.file_path, &new_file_path);
+                }
+
+                let new_json_path_str = new_json_path.display().to_string();
+                if descriptor.json_path != new_json_path_str && Path::new(&descriptor.json_path).exists() {
+                    if let Some(parent) = new_json_path.parent() {
+                        let _ = fs::create_dir_all(parent);
+                    }
+                    let _ = fs::rename(&descriptor.json_path, &new_json_path);
+                }
+            }
+        }
+    }
+
+    let updated_descriptor = CommonFileDescriptor { 
+        file_path: new_file_path.display().to_string(), 
+        json_path: new_json_path.display().to_string()
+    };
+
+    let json_string = serde_json::to_string_pretty(&updated_descriptor).unwrap();
+    fs::write(path, json_string).expect("failed to save common file descriptor file");
+
+    return (new_file_path, new_json_path);
+}

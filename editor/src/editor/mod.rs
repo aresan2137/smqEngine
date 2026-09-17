@@ -1,16 +1,16 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{fs, process::Command};
 
 use bevy_ecs::prelude::*;
 use egui_dock::{DockState, NodeIndex, TabViewer};
 use egui::{TextureId, Ui, WidgetText};
-use serde::{Deserialize, Serialize};
-use smq_engine::{drop_point, ui};
+use smq_engine::*;
 
-use crate::editor::settings::Settings;
+use crate::{bake::bake, editor::settings::Settings};
 
 mod assets;
 mod settings;
-
+mod inspector;
+pub use inspector::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum EditorTab {
@@ -62,7 +62,8 @@ pub struct EditorViewer<'a> {
     viewportid: Option<TextureId>,
 
     assets: &'a mut assets::Assets,
-    settings: &'a mut settings::Settings
+    settings: &'a mut settings::Settings,
+    inspector: &'a mut inspector::Inspector
 }
 
 impl<'a> TabViewer for EditorViewer<'a> {
@@ -82,7 +83,7 @@ impl<'a> TabViewer for EditorViewer<'a> {
                 self.assets.egui(ui);
             }
             EditorTab::Inspector => { 
-                ui.label("lakaka");
+                self.inspector.egui(ui, &mut self.assets);
             }
             EditorTab::Viewport => { 
                 if let Some(texture_id) = self.viewportid {
@@ -127,7 +128,8 @@ pub struct EditorState {
     menu_popup_rect: Option<egui::Rect>,
 
     pub assets: assets::Assets,
-    pub settings: settings::Settings
+    pub settings: settings::Settings,
+    inspector: inspector::Inspector
 }
 
 impl Default for EditorState {
@@ -146,7 +148,8 @@ impl Default for EditorState {
             hovered_menu: None,
             menu_popup_rect: None,
             assets: assets::Assets::default(),
-            settings: Settings::load()
+            settings: Settings::load(),
+            inspector: inspector::Inspector::default()
         }
     }
 }
@@ -169,13 +172,6 @@ pub fn editor_update(world: &mut World) {
     }
 
     let mut dock_resource = world.remove_resource::<EditorState>().unwrap();
-
-    let mut viewer = EditorViewer { 
-        world,
-        viewportid: dock_resource.viewportid,
-        assets: &mut dock_resource.assets,
-        settings: &mut dock_resource.settings
-    };
     
     if let Some(screen_rect) = ui().input(|i| i.raw.screen_rect) {     
         egui::Window::new("")
@@ -249,8 +245,38 @@ pub fn editor_update(world: &mut World) {
                         } else {
                             dock_resource.menu_popup_rect = None;
                         }
+
+                        ui.separator();
+
+                        if ui.button("play").clicked() {
+                            if let Err(e) = bake(&dock_resource) {
+                                log::error!("{}", e);
+                            } else {
+                                if let Err(e) = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn() {
+                                    log::error!("{}", e);
+                                }
+                            }                    
+                        }
+                        if ui.button("play no bake").clicked() {
+                            if let Err(e) = Command::new("cargo").arg("run").arg("-p").arg("smq_game").spawn() {
+                                log::error!("{}", e);
+                            }
+                        }
+                        if ui.button("bake").clicked() {
+                            if let Err(e) = bake(&dock_resource) {
+                                log::error!("{}", e);
+                            }
+                        }
                     });
                 });
+
+                let mut viewer = EditorViewer { 
+                    world,
+                    viewportid: dock_resource.viewportid,
+                    assets: &mut dock_resource.assets,
+                    settings: &mut dock_resource.settings,
+                    inspector: &mut dock_resource.inspector
+                };
 
                 let space = ui.available_size();
                 egui::Frame::default()
@@ -268,71 +294,4 @@ pub fn editor_update(world: &mut World) {
     }
 
     world.insert_resource(dock_resource);
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CommonFileDescriptor {
-    pub file_path: String,
-    pub json_path: String
-}
-
-pub fn process_common_file_descriptor(path: &Path) -> (PathBuf, PathBuf) {
-    let is_valid_json = match fs::read_to_string(path) {
-        Ok(contents) => serde_json::from_str::<CommonFileDescriptor>(&contents).is_ok(),
-        Err(_) => false
-    };
-
-    let path_str = path.display().to_string().replace('\\', "/");
-    
-    let rest = if let Some(idx) = path_str.find("smq_proj/assets/") {
-        &path_str[idx + "smq_proj/assets/".len()..]
-    } else {
-        panic!("error: filepath doesn't start with smq_proj/assets/': {:?}", path);
-    };
-
-    let new_file_path = PathBuf::from("smq_proj/data/file").join(rest);
-    let new_json_path = PathBuf::from("smq_proj/data/json").join(rest);
-
-    if !is_valid_json {
-        if path.exists() {
-            if let Some(parent) = new_file_path.parent() {
-                let _ = fs::create_dir_all(parent);
-            }
-            if let Err(_) = fs::rename(path, &new_file_path) {
-                if fs::copy(path, &new_file_path).is_ok() {
-                    let _ = fs::remove_file(path);
-                }
-            }
-        }
-    } else {
-        if let Ok(contents) = fs::read_to_string(path) {
-            if let Ok(descriptor) = serde_json::from_str::<CommonFileDescriptor>(&contents) {
-                let new_file_path_str = new_file_path.display().to_string();
-                if descriptor.file_path != new_file_path_str && Path::new(&descriptor.file_path).exists() {
-                    if let Some(parent) = new_file_path.parent() {
-                        let _ = fs::create_dir_all(parent);
-                    }
-                    let _ = fs::rename(&descriptor.file_path, &new_file_path);
-                }
-
-                let new_json_path_str = new_json_path.display().to_string();
-                if descriptor.json_path != new_json_path_str && Path::new(&descriptor.json_path).exists() {
-                    if let Some(parent) = new_json_path.parent() {
-                        let _ = fs::create_dir_all(parent);
-                    }
-                    let _ = fs::rename(&descriptor.json_path, &new_json_path);
-                }
-            }
-        }
-    }
-
-    let updated_descriptor = CommonFileDescriptor { 
-        file_path: new_file_path.display().to_string(), 
-        json_path: new_json_path.display().to_string()
-    };    
-
-    let json_string = serde_json::to_string_pretty(&updated_descriptor).unwrap();
-    fs::write(path, json_string).expect("failed to save common file descriptor file");
-
-    (new_file_path, new_json_path)
 }

@@ -1,1 +1,1 @@
-{"sampler":"Nearest","repeater":"Repeat","format":"Rgba8UnormSrgb","mipmaps":1}
+{"sampler":"NearestMapped","repeater":"Repeat","format":"Rgba8UnormSrgb","mipmaps":4}

@@ -128,14 +128,14 @@ impl RenderTexture {
 }
 
 impl RenderTextureAttachment {
-    pub fn get_texture_binding(&self, visibility: ShaderStages) -> BindingS<'_> {
+    pub fn get_texture_binding(&self, visibility: ShaderStages, filterable: bool) -> BindingS<'_> {
         BindingS {
             entry_layout: BindGroupLayoutEntry { 
                 binding: 0,
                 visibility, 
                 ty: BindingType::Texture {
                     sample_type: TextureSampleType::Float { 
-                        filterable: true 
+                        filterable
                     },
                     view_dimension: TextureViewDimension::D2,
                     multisampled: false

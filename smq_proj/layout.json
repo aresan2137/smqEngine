@@ -15,7 +15,7 @@
                   "y": 720.0
                 }
               },
-              "fraction": 0.7677084,
+              "fraction": 0.76848984,
               "fully_collapsed": false,
               "collapsed_leaf_count": 0
             }
@@ -28,11 +28,11 @@
                   "y": 21.0
                 },
                 "max": {
-                  "x": 982.0,
+                  "x": 983.0,
                   "y": 720.0
                 }
               },
-              "fraction": 0.2306121,
+              "fraction": 0.20302622,
               "fully_collapsed": false,
               "collapsed_leaf_count": 0
             }
@@ -41,7 +41,7 @@
             "Leaf": {
               "rect": {
                 "min": {
-                  "x": 983.0,
+                  "x": 984.0,
                   "y": 21.0
                 },
                 "max": {
@@ -51,7 +51,7 @@
               },
               "viewport": {
                 "min": {
-                  "x": 983.0,
+                  "x": 984.0,
                   "y": 45.0
                 },
                 "max": {
@@ -76,7 +76,7 @@
                   "y": 21.0
                 },
                 "max": {
-                  "x": 226.0,
+                  "x": 199.0,
                   "y": 720.0
                 }
               },
@@ -86,7 +86,7 @@
                   "y": 45.0
                 },
                 "max": {
-                  "x": 226.0,
+                  "x": 199.0,
                   "y": 720.0
                 }
               },
@@ -103,15 +103,15 @@
             "Vertical": {
               "rect": {
                 "min": {
-                  "x": 227.0,
+                  "x": 200.0,
                   "y": 21.0
                 },
                 "max": {
-                  "x": 982.0,
+                  "x": 983.0,
                   "y": 720.0
                 }
               },
-              "fraction": 0.48362124,
+              "fraction": 0.6158798,
               "fully_collapsed": false,
               "collapsed_leaf_count": 0
             }
@@ -124,26 +124,27 @@
             "Leaf": {
               "rect": {
                 "min": {
-                  "x": 227.0,
+                  "x": 200.0,
                   "y": 21.0
                 },
                 "max": {
-                  "x": 982.0,
-                  "y": 359.0
+                  "x": 983.0,
+                  "y": 451.0
                 }
               },
               "viewport": {
                 "min": {
-                  "x": 227.0,
+                  "x": 200.0,
                   "y": 45.0
                 },
                 "max": {
-                  "x": 982.0,
-                  "y": 359.0
+                  "x": 983.0,
+                  "y": 451.0
                 }
               },
               "tabs": [
-                "Viewport"
+                "Viewport",
+                "Settings"
               ],
               "active": 0,
               "scroll": 0.0,
@@ -155,40 +156,40 @@
             "Leaf": {
               "rect": {
                 "min": {
-                  "x": 227.0,
-                  "y": 360.0
+                  "x": 200.0,
+                  "y": 452.0
                 },
                 "max": {
-                  "x": 982.0,
+                  "x": 983.0,
                   "y": 720.0
                 }
               },
               "viewport": {
                 "min": {
-                  "x": 227.0,
-                  "y": 384.0
+                  "x": 200.0,
+                  "y": 476.0
                 },
                 "max": {
-                  "x": 982.0,
+                  "x": 983.0,
                   "y": 720.0
                 }
               },
               "tabs": [
-                "Assets",
-                "Settings"
+                "Assets"
               ],
-              "active": 1,
+              "active": 0,
               "scroll": 0.0,
               "collapsed": false,
               "tab_bar_hidden": false
             }
           }
         ],
-        "focused_node": 9,
+        "focused_node": 10,
         "collapsed": false,
         "collapsed_leaf_count": 0
       }
-    }
+    },
+    "Empty"
   ],
   "focused_surface": 0
 }

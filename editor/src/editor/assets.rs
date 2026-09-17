@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}, path::PathBuf};
 
-use crate::editor::CommonFileDescriptor;
+use crate::CommonFileDescriptor;
 
 // this sucks
 

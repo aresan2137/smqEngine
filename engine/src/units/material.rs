@@ -13,8 +13,8 @@ pub fn crate_shader_module<D>(context: &mut Context<D>, code: &str) -> ShaderMod
     });
 }
 
-pub fn get_default_vert_layout() -> VertexBufferLayout<'static> {
-        return VertexBufferLayout {
+pub fn get_default_vert_layout() -> Option<VertexBufferLayout<'static>> {
+        return Some(VertexBufferLayout {
             array_stride: 32,
             step_mode: VertexStepMode::Vertex,
             attributes: &[
@@ -34,7 +34,7 @@ pub fn get_default_vert_layout() -> VertexBufferLayout<'static> {
                     format: VertexFormat::Float32x3,
                 },
             ],
-        };
+        });
     }
 
 impl RenderMaterial {
@@ -43,10 +43,10 @@ impl RenderMaterial {
         culling: Option<Face>, 
         label: Option<&str>, 
         render_texture: &RenderTexture, 
-        module: ShaderModule, 
-        vert_layout: VertexBufferLayout, 
+        module: &ShaderModule, 
+        vert_layout: Option<VertexBufferLayout>, 
         depth_compare: Option<CompareFunction>, 
-        layout: [Option<&BindGroupS>; 4]
+        layout: &PipelineLayout
     ) -> Self {
         let holding = context.holding.as_mut().unwrap();
         let mut attachments = Vec::new();
@@ -59,42 +59,26 @@ impl RenderMaterial {
             }));
         }       
 
-        let mut layouts: [Option<&BindGroupLayout>; 4] = [None, None, None, None];
-
-        if let Some(lays) = layout[0] {
-            layouts[0] = Some(&lays.bind_group_layout);
-        }
-        if let Some(lays) = layout[1] {
-            layouts[1] = Some(&lays.bind_group_layout);
-        }
-        if let Some(lays) = layout[2] {
-            layouts[2] = Some(&lays.bind_group_layout);
-        }
-        if let Some(lays) = layout[3] {
-            layouts[3] = Some(&lays.bind_group_layout);
-        }
-
-        let mat1layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
-            label, 
-            bind_group_layouts: &[
-                layouts[0],
-                layouts[1],
-                layouts[2],
-                layouts[3],
-            ],
-            immediate_size: 0
-        });
+        let depth_stencil = if let Some(depth_data) = &render_texture.depth_texture {
+            Some(DepthStencilState {
+                format: depth_data.2,
+                depth_write_enabled: Some(true), 
+                depth_compare,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default()
+            })
+        } else {
+            None
+        };
 
         let pipeline = holding.device.create_render_pipeline(&RenderPipelineDescriptor { 
             label,
-            layout: Some(&mat1layout),
+            layout: Some(&layout),
             vertex: VertexState {
-                module: &module,
+                module: module,
                 entry_point: Some("vs_main"),
                 compilation_options: PipelineCompilationOptions::default(),
-                buffers: &[
-                    Some(vert_layout)
-                ]
+                buffers: &[vert_layout]
             }, 
             primitive: PrimitiveState { 
                 topology: PrimitiveTopology::TriangleList,
@@ -105,23 +89,17 @@ impl RenderMaterial {
                 polygon_mode: PolygonMode::Fill,
                 conservative: false
             }, 
-            depth_stencil: Some(DepthStencilState { 
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: Some(true),
-                depth_compare,
-                stencil: StencilState::default(),
-                bias: DepthBiasState::default()
-            }), 
-            multisample: MultisampleState { 
+            depth_stencil, 
+            multisample: MultisampleState {
                 count: 1, 
                 mask: !0, 
                 alpha_to_coverage_enabled: false 
             }, 
             fragment: Some(FragmentState { 
-                module: &module,
+                module: module,
                 entry_point: Some("fs_main"),
                 compilation_options: PipelineCompilationOptions::default(),
-                targets: &[Some(ColorTargetState { format: TextureFormat::Rgba8Unorm, blend: None, write_mask: ColorWrites::ALL })]
+                targets: &attachments
             }), 
             multiview_mask: None, 
             cache: None
@@ -136,7 +114,6 @@ impl RenderMaterial {
         render_pass.set_pipeline(&self.pipeline);
     }
 }
-
 
 pub fn compute<D>(context: &Context<D>, layout: &[Option<&BindGroupS>; 4], module: &ShaderModule, eantry_point: &str, label: Option<&str>) -> ComputePipeline {
     let holding = context.holding.as_ref().unwrap();

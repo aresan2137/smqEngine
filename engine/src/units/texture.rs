@@ -13,14 +13,14 @@ pub struct TextureS {
 pub enum SamplingMode {
     Nearest,
     Bilinear,
-    Trilinear
+    Trilinear,
+    NearestMapped
 }
 
 impl TextureS {
     pub fn new<D>(context: &Context<D>, bytes: &[u8], sampling: SamplingMode, mitmap_level: u32, format: TextureFormat, repeater: AddressMode, label: Option<&str>) -> Self {
         let holding = context.holding.as_ref().unwrap();
         let img = image::load_from_memory(bytes).expect("failed to load texture");
-        let rgba = img.to_rgba8();
         let dimensions = img.dimensions();
 
         let size = Extent3d {
@@ -40,31 +40,59 @@ impl TextureS {
             view_formats: &[]
         });
 
-        holding.queue.write_texture(
-            TexelCopyTextureInfo {
-                texture: &texture,
-                mip_level: 0,
-                origin: Origin3d::ZERO,
-                aspect: TextureAspect::All
-            },
-            &rgba,
-            TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1)
-            },
-            size
-        );
+        let mut current_rgba = img.to_rgba8();
+        let mut current_width = img.dimensions().0;
+        let mut current_height = img.dimensions().1;
+
+        for level in 0..mitmap_level {
+            let mip_size = Extent3d {
+                width: current_width,
+                height: current_height,
+                depth_or_array_layers: 1
+            };
+
+            holding.queue.write_texture(
+                TexelCopyTextureInfo {
+                    texture: &texture,
+                    mip_level: level,
+                    origin: Origin3d::ZERO,
+                    aspect: TextureAspect::All
+                },
+                &current_rgba,
+                TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(4 * current_width),
+                    rows_per_image: Some(current_height)
+                },
+                mip_size
+            );
+
+            if level < mitmap_level - 1 {
+                let next_width = (current_width / 2).max(1);
+                let next_height = (current_height / 2).max(1);
+
+                let next_image = image::imageops::resize(
+                    &current_rgba, 
+                    next_width, 
+                    next_height, 
+                    image::imageops::FilterType::Triangle 
+                );
+
+                current_rgba = next_image;
+                current_width = next_width;
+                current_height = next_height;
+            }
+        }
 
         let view = texture.create_view(&TextureViewDescriptor::default());
         let sampler = holding.device.create_sampler(&SamplerDescriptor { 
             label: None, 
-            address_mode_u: repeater, 
-            address_mode_v: repeater, 
-            address_mode_w: repeater, 
-            mag_filter: if sampling == SamplingMode::Nearest { FilterMode::Nearest } else { FilterMode::Linear }, 
-            min_filter: if sampling == SamplingMode::Nearest { FilterMode::Nearest } else { FilterMode::Linear }, 
-            mipmap_filter: if sampling == SamplingMode::Trilinear { MipmapFilterMode::Linear } else { MipmapFilterMode::Nearest }, 
+            address_mode_u: repeater,
+            address_mode_v: repeater,
+            address_mode_w: repeater,
+            mag_filter: if sampling == SamplingMode::Nearest || sampling == SamplingMode::NearestMapped { FilterMode::Nearest } else { FilterMode::Linear }, 
+            min_filter: if sampling == SamplingMode::Nearest || sampling == SamplingMode::NearestMapped { FilterMode::Nearest } else { FilterMode::Linear }, 
+            mipmap_filter: if sampling == SamplingMode::Trilinear || sampling == SamplingMode::NearestMapped { MipmapFilterMode::Linear } else { MipmapFilterMode::Nearest }, 
             ..Default::default()
         });
 

@@ -1,3 +1,5 @@
+use std::fs;
+
 use bevy_ecs::prelude::*;
 use glam::*;
 
@@ -21,7 +23,7 @@ pub fn fps_logger(time: Res<Delta>) {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 #[allow(unused)]
-fn main() {    
+fn main() {
     logger::init();
     
     let mut world = World::new();
@@ -43,9 +45,23 @@ fn main() {
         }
     );
 
+    world.spawn(PointLight {
+        position: Vec3 { x: 5.0, y: 5.0, z: 0.0 },
+        color: Vec3::ONE,
+        power: 0.1
+    });
+
+    world.spawn(PointLight {
+        position: Vec3 { x: 00.0, y: 5.0, z: 20.0 },
+        color: Vec3::new(0.3, 0.9, 0.4),
+        power: 0.1
+    });
+
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
-    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextEvents { 
+    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextSettings { 
+        present_mode: PresentMode::Fifo
+    }, ContextEvents { 
         renderer: Some(render), 
         on_wgpu_load: Some(load_assets), 
         pre_schedule: None,
@@ -59,34 +75,52 @@ fn main() {
 struct Renderer {
     gen_assets: GenAssets,
     mat1: RenderMaterial,
+    mat2: RenderMaterial,
     bind_group0: BindGroupS,
     bind_group1: BindGroupS,
     bind_group2: BindGroupS,
-    mesh1: Mesh,
-    bind_group_blit: BindGroupS,
-    blit_pipeline: BlitInfo
+    bind_group0post: BindGroupS
 }
 
 #[allow(unused)]
 fn load_assets(context: &mut Context<Renderer>) {
-    let mut gen_assets = GenAssets::init_gen_assets(context);
 
-    gen_assets.renderer_ubodata0_ubo.data.proj = camera::rh::proj::directx::perspective((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
+    #[cfg(not(target_arch = "wasm32"))]
+    let ssf_text_vec = fs::read("smq_proj/build/game.ssf").unwrap();
+    #[cfg(not(target_arch = "wasm32"))]
+    let ssf_text = ssf_text_vec.as_slice();
 
-    gen_assets.renderer_ubodata0_ubo.upload_data(context);
-    gen_assets.renderer_ubodata2_ubo.upload_data(context);
+    #[cfg(target_arch = "wasm32")]
+    let ssf_text = include_bytes!("../../smq_proj/build/game.ssf");
+
+    let ssf_data = load_ssf(ssf_text).unwrap();
+
+    let mut gen_assets = GenAssets::init_gen_assets(context, &ssf_data);
+
+    gen_assets.ubodata0.data.proj = camera::rh::proj::directx::perspective((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
+
+    gen_assets.ubodata0.upload_data(context);
+    gen_assets.ubodata2.upload_data(context);
 
     let bind_group0 = BindGroupS::new(context, &[
-        gen_assets.renderer_ubodata0_ubo.get_binding(ShaderStages::VERTEX)
+        gen_assets.ubodata0.get_binding(ShaderStages::VERTEX)
     ], None);
 
     let bind_group1 = BindGroupS::new(context, &[
-        gen_assets.renderer_ubodata1_ubo.get_binding(ShaderStages::VERTEX)
+        gen_assets.ubodata1.get_binding(ShaderStages::VERTEX)
     ], None);
 
     let bind_group2 = BindGroupS::new(context, &[
-        gen_assets.renderer_ubodata2_ubo.get_binding(ShaderStages::VERTEX),
-        
+        gen_assets.ubodata2.get_binding(ShaderStages::VERTEX),
+        gen_assets.lakaka_png.get_texture_binding(ShaderStages::FRAGMENT),
+        gen_assets.lakaka_png.get_sampler_binding(ShaderStages::FRAGMENT)
+    ], None);
+
+    let bind_group0post = BindGroupS::new(context, &[
+        gen_assets.ubodefferedinfo.get_binding(ShaderStages::FRAGMENT),
+        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT, false),
+        gen_assets.renderer_main_renderTexture.attachments[1].get_texture_binding(ShaderStages::FRAGMENT, false),
+        gen_assets.renderer_main_renderTexture.attachments[2].get_texture_binding(ShaderStages::FRAGMENT, false)
     ], None);
 
     let holding = context.holding.as_mut().unwrap();
@@ -104,91 +138,47 @@ fn load_assets(context: &mut Context<Renderer>) {
 
     let mat1module = holding.device.create_shader_module(ShaderModuleDescriptor { 
         label: None, 
-        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/base.wgsl")))
+        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/textured.wgsl")))
     });
 
-    let mat1 = holding.device.create_render_pipeline(&RenderPipelineDescriptor { 
-        label: None,
-        layout: Some(&mat1layout),
-        vertex: VertexState {
-            module: &mat1module,
-            entry_point: Some("vs_main"),
-            compilation_options: PipelineCompilationOptions::default(),
-            buffers: &[
-                Some(VertexBufferLayout { 
-                    array_stride: 32, 
-                    step_mode: VertexStepMode::Vertex, 
-                    attributes: &[
-                        VertexAttribute { 
-                            format: VertexFormat::Float32x3,
-                            offset: 0,
-                            shader_location: 0
-                        },
-                        VertexAttribute { 
-                            format: VertexFormat::Float32x2,
-                            offset: 12,
-                            shader_location: 1
-                        },
-                        VertexAttribute { 
-                            format: VertexFormat::Float32x3,
-                            offset: 20,
-                            shader_location: 2
-                        }
-                    ]
-                })
-            ]
-        }, 
-        primitive: PrimitiveState { 
-            topology: PrimitiveTopology::TriangleList,
-            strip_index_format: None,
-            front_face: FrontFace::Ccw,
-            cull_mode: Some(Face::Back),
-            unclipped_depth: false,
-            polygon_mode: PolygonMode::Fill,
-            conservative: false
-        }, 
-        depth_stencil: Some(DepthStencilState { 
-            format: TextureFormat::Depth32Float,
-            depth_write_enabled: Some(true),
-            depth_compare: Some(CompareFunction::Less),
-            stencil: StencilState::default(),
-            bias: DepthBiasState::default()
-        }), 
-        multisample: MultisampleState { 
-            count: 1, 
-            mask: !0, 
-            alpha_to_coverage_enabled: false 
-        }, 
-        fragment: Some(FragmentState { 
-            module: &mat1module,
-            entry_point: Some("fs_main"),
-            compilation_options: PipelineCompilationOptions::default(),
-            targets: &[Some(ColorTargetState { format: TextureFormat::Rgba8Unorm, blend: None, write_mask: ColorWrites::ALL })]
-        }), 
-        multiview_mask: None, 
-        cache: None
+    let mat2layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
+        label: None, 
+        bind_group_layouts: &[
+            Some(&bind_group0post.bind_group_layout),
+            None,
+            None,
+            None
+        ],
+        immediate_size: 0
     });
 
-    let mesh1 = Mesh::new(context, 
-        include_bytes!("../../smq_proj/data/file/mesh/Suzanne.smf"), 32, None).unwrap();
+    let mat2module = holding.device.create_shader_module(ShaderModuleDescriptor { 
+        label: None, 
+        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/deffering.wgsl")))
+    });
 
-    let bind_group_blit = BindGroupS::new(context, &[
-        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT),
-        gen_assets.renderer_main_renderTexture.attachments[0].get_sampler_binding(ShaderStages::FRAGMENT)
-    ], None);
+    let mat1 = RenderMaterial::new(context, Some(Face::Back), None, &gen_assets.renderer_main_renderTexture, 
+        &mat1module, get_default_vert_layout(), Some(CompareFunction::Less), &mat1layout);
 
-    let blit_pipeline = context.create_blit_pipeline(&bind_group_blit); 
-    
+    let mat2 = RenderMaterial::new(context, None, None, &gen_assets.renderer_post_renderTexture, 
+        &mat2module, None, None, &mat2layout);
+
     context.data = Some(Renderer { 
         gen_assets, 
-        mat1: RenderMaterial { pipeline: mat1 }, 
-        bind_group0, 
-        bind_group1, 
-        bind_group2, 
-        mesh1, 
-        bind_group_blit, 
-        blit_pipeline 
+        mat1,
+        mat2,
+        bind_group0,
+        bind_group1,
+        bind_group2,
+        bind_group0post
     });
+}
+
+#[derive(Component)]
+struct PointLight {
+    pub position: Vec3,
+    pub color: Vec3,
+    pub power: f32
 }
 
 #[allow(unused)]
@@ -207,28 +197,59 @@ fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) {
 
         let view = glam::camera::lh::view::look_to_mat4(cam.position, forward, up);
 
-        data.gen_assets.renderer_ubodata1_ubo.data.view = view;
-        data.gen_assets.renderer_ubodata1_ubo.upload_data(context);
+        data.gen_assets.ubodata1.data.view = view;
+        data.gen_assets.ubodata1.upload_data(context);
+
+        data.gen_assets.ubodefferedinfo.data.camera_position = cam.position;
     } else {
         println!("NO CAMERA!!!");
     }
 
+    let mut light_query = context.world.query::<&PointLight>();
+
+    for (i, light) in light_query.iter(&context.world).enumerate() {
+        if i >= 16 {
+            log::warn!("TOO MUCH LIGHTS!!!");
+            break;
+        }
+
+        data.gen_assets.ubodefferedinfo.data.light_count = i as u32 + 1;
+
+        data.gen_assets.ubodefferedinfo.data.lights[i].position = light.position;
+        data.gen_assets.ubodefferedinfo.data.lights[i].color = light.color;
+        data.gen_assets.ubodefferedinfo.data.lights[i].power = light.power;
+    }
+
+    data.gen_assets.ubodefferedinfo.upload_data(context);
+
     if let Some(mut frame) = context.start_frame() {
         {
-                let mut render_pass = context.get_render_pass(&mut frame, &data.gen_assets.renderer_main_renderTexture);
+            let mut render_pass = context.get_render_pass(&mut frame, &data.gen_assets.renderer_main_renderTexture);
 
-                render_pass.set_pipeline(&mut data.mat1.pipeline);
+            render_pass.set_pipeline(&mut data.mat1.pipeline);
 
-                render_pass.set_vertex_buffer(0, data.mesh1.buffer.slice(..));
+            render_pass.set_bind_group(0, &data.bind_group0.bind_group, &[]);
+            render_pass.set_bind_group(1, &data.bind_group1.bind_group, &[]);
+            render_pass.set_bind_group(2, &data.bind_group2.bind_group, &[]);
 
-                render_pass.set_bind_group(0, &data.bind_group0.bind_group, &[]);
-                render_pass.set_bind_group(1, &data.bind_group1.bind_group, &[]);
-                render_pass.set_bind_group(2, &data.bind_group2.bind_group, &[]);
+            render_pass.set_vertex_buffer(0, data.gen_assets.file_mesh_Walls_smf.buffer.slice(..));
+            render_pass.draw(0..data.gen_assets.file_mesh_Walls_smf.vertex_count, 0..1);
 
-                render_pass.draw(0..data.mesh1.vertex_count, 0..1);
-            }
+            render_pass.set_vertex_buffer(0, data.gen_assets.file_mesh_Floor_smf.buffer.slice(..));
+            render_pass.draw(0..data.gen_assets.file_mesh_Floor_smf.vertex_count, 0..1);
+        }
 
-            context.blit_screen(&mut frame, &data.blit_pipeline, &data.bind_group_blit);
+        {
+            let mut render_pass = context.get_render_pass(&mut frame, &data.gen_assets.renderer_post_renderTexture);
+
+            render_pass.set_pipeline(&mut data.mat2.pipeline);
+
+            render_pass.set_bind_group(0, &data.bind_group0post.bind_group, &[]);
+
+            render_pass.draw(0..3, 0..1);
+        }
+
+        context.blit_screen(&mut frame, &data.gen_assets.blitinfo, &data.gen_assets.blit_group);
 
         context.draw_egui(&mut frame, full_output);
 

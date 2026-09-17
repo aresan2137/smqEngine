@@ -24,13 +24,13 @@ pub struct Context<'a, D> {
     pub schedule: Schedule,
     is_minimized: bool,
     events: ContextEvents<D>,
+    pub settings: ContextSettings,
     pub surface: Option<Arc<Surface<'a>>>,
     pub holding: Option<ContextWgpuHolding>,
     pub data: Option<D>,
     pub proxy: EventLoopProxy<ContextUserEvent>
 }
 
-#[derive(Default)]
 pub struct ContextEvents<D> {
     pub renderer: Option<fn(&mut Context<D>, ::egui::FullOutput)>,
     pub on_wgpu_load: Option<fn(&mut Context<D>)>,
@@ -38,14 +38,29 @@ pub struct ContextEvents<D> {
     pub on_exit: Option<fn(&mut Context<D>)>
 }
 
+#[derive(Clone)]
+pub struct ContextSettings {
+    pub present_mode: PresentMode 
+}
+
+impl Default for ContextSettings {
+    fn default() -> Self {
+        return Self { 
+            present_mode: PresentMode::AutoVsync
+        };
+    }
+}
+
+
 impl<D> Context<'_, D> {
-    pub fn new(world: World, schedule: Schedule, proxy: EventLoopProxy<ContextUserEvent>, events: ContextEvents<D>) -> Self {        
+    pub fn new(world: World, schedule: Schedule, proxy: EventLoopProxy<ContextUserEvent>, settings: ContextSettings, events: ContextEvents<D>) -> Self {        
         return Self {
             window: None,
             world,
             schedule,
             is_minimized: false,
             events,
+            settings,
             surface: None,
             holding: None,
             data: None,
@@ -76,18 +91,18 @@ pub struct ContextWgpuHolding {
 }
 
 impl ContextWgpuHolding {
-    async fn new(window: Arc<Window>, instance: &Instance, surface: &Surface<'_>) -> Self {
+    async fn new(window: Arc<Window>, instance: &Instance, surface: &Surface<'_>, settings: &ContextSettings) -> Self {
         let adapter = instance.request_adapter(&RequestAdapterOptions { 
             power_preference: PowerPreference::HighPerformance,
             force_fallback_adapter: false, 
             compatible_surface: Some(&surface),
-            apply_limit_buckets: false 
+            apply_limit_buckets: false
         }).await.expect("failed to get adapter");
 
         let (device, queue) = adapter.request_device(&DeviceDescriptor { 
             label: None, 
             required_features: Features::empty(), 
-            required_limits: Limits::default(), 
+            required_limits: Limits::defaults(), 
             experimental_features: ExperimentalFeatures::disabled(), 
             memory_hints: MemoryHints::Performance, 
             trace: Trace::Off
@@ -105,7 +120,7 @@ impl ContextWgpuHolding {
             format: surface_format,
             width: size.width.max(1),
             height: size.height.max(1),
-            present_mode: PresentMode::AutoVsync,
+            present_mode: settings.present_mode,
             alpha_mode: CompositeAlphaMode::Auto,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
@@ -179,16 +194,17 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                 let event_proxy = self.proxy.clone();
 
                 let window_clone = window.clone();
-                let surface_clone = surface.clone();                
+                let surface_clone = surface.clone();    
+                let settings_clone = self.settings.clone();            
 
                 wasm_bindgen_futures::spawn_local(async move {
-                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(ContextWgpuHolding::new(window_clone, &instance, &surface_clone).await));
+                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(ContextWgpuHolding::new(window_clone, &instance, &surface_clone, &settings_clone).await));
                 });
             }
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                self.holding = Some(pollster::block_on(ContextWgpuHolding::new(window.clone(), &instance, &surface)));
+                self.holding = Some(pollster::block_on(ContextWgpuHolding::new(window.clone(), &instance, &surface, &self.settings)));
             }
 
             self.surface = Some(surface);

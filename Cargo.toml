@@ -8,7 +8,7 @@ resolver = "2"
 
 # Globalne profile kompilacji dla całego projektu!
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = true
 codegen-units = 1
 panic = "abort"
