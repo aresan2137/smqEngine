@@ -51,7 +51,7 @@ fn call_blender_export(blend_path: &Path, output_gltf_path: &Path) -> bool {
     }
 }
 
-fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
+pub fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
     let (document, buffers, _) = gltf::import(gltf_path).expect("failed to load glb file");
 
     if output_dir.exists() {
@@ -65,7 +65,7 @@ fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
         let safe_name = raw_name.replace(|c: char| !c.is_alphanumeric(), "_");
 
         let mut vertices: Vec<f32> = Vec::new();
-        let mut vertex_count: i32 = 0;
+        let mut vertex_count: u32 = 0;
 
         for primitive in mesh.primitives() {
             let reader = primitive.reader(|buffer| buffers.get(buffer.index()).map(|b| &b.0[..]));
@@ -130,20 +130,26 @@ fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
             continue; 
         }
 
-        let mut payload = Vec::new();
-        payload.push(0b10110000);
-        payload.extend_from_slice(&vertex_count.to_le_bytes()); 
-        payload.extend_from_slice(&0u32.to_le_bytes()); 
-
-        for float_val in vertices {
-            payload.extend_from_slice(&float_val.to_le_bytes());
-        }
-
         let smf_path = output_dir.join(format!("{}.smf", safe_name));
-        if let Err(e) = std::fs::write(&smf_path, payload) {
+        
+        let vertex_bytes: Vec<u8> = vertices.iter().flat_map(|f| f.to_le_bytes()).collect();
+        
+        if let Err(e) = write_smf_file(&smf_path, vertex_count, &vertex_bytes) {
             log::error!("failed to save smf for {}: {}", safe_name, e);
         } else {
             log::info!("Exported: {}", smf_path.display());
         }
     }
+}
+
+pub fn write_smf_file(path: &Path, vertex_count: u32, vertex_data: &[u8]) -> std::io::Result<()> {
+    let mut payload = Vec::new();
+    
+    payload.push(0b10110000);
+    payload.extend_from_slice(&vertex_count.to_le_bytes()); 
+    payload.extend_from_slice(&0u32.to_le_bytes()); 
+    
+    payload.extend_from_slice(vertex_data); 
+
+    std::fs::write(path, payload)
 }

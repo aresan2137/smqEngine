@@ -3,7 +3,7 @@ use std::fs;
 use bevy_ecs::prelude::*;
 use glam::*;
 
-use smq_engine::*;
+use smq_engine::{other::bvh::{BVHNode, LoadedBvhData, ModelInstance, load_bvh_data}, *};
 
 use wgpu::*;
 
@@ -14,6 +14,8 @@ use wasm_bindgen::prelude::*;
 use winit::event_loop::EventLoop;
 
 use crate::gen_bake::GenAssets;
+
+mod gen_game;
 
 pub fn fps_logger(time: Res<Delta>) {
     egui::Window::new("FPS").default_width(400.0).show(&ui(), |ui| {
@@ -48,19 +50,33 @@ fn main() {
     world.spawn(PointLight {
         position: Vec3 { x: 5.0, y: 5.0, z: 0.0 },
         color: Vec3::ONE,
-        power: 0.1
+        power: 5.0
     });
 
     world.spawn(PointLight {
         position: Vec3 { x: 00.0, y: 5.0, z: 20.0 },
         color: Vec3::new(0.3, 0.9, 0.4),
-        power: 0.1
+        power: 5.0
+    });
+
+    world.spawn(DrawedObject {
+        position: Vec3::ZERO,
+        rotation: Quat::IDENTITY,
+        size: Vec3::ONE,
+        meshid: 2
+    });
+
+    world.spawn(DrawedObject {
+        position: Vec3::ZERO,
+        rotation: Quat::IDENTITY,
+        size: Vec3::ONE,
+        meshid: 3
     });
 
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
     let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextSettings { 
-        present_mode: PresentMode::Fifo
+        present_mode: PresentMode::AutoNoVsync
     }, ContextEvents { 
         renderer: Some(render), 
         on_wgpu_load: Some(load_assets), 
@@ -79,7 +95,11 @@ struct Renderer {
     bind_group0: BindGroupS,
     bind_group1: BindGroupS,
     bind_group2: BindGroupS,
-    bind_group0post: BindGroupS
+    bind_group0post: BindGroupS,
+    bvh_mesh: Mesh,
+    bvh_bimbo: LoadedBvhData,
+    instances_buffer: Buffer,
+    bvh_buffer: Buffer
 }
 
 #[allow(unused)]
@@ -116,14 +136,53 @@ fn load_assets(context: &mut Context<Renderer>) {
         gen_assets.lakaka_png.get_sampler_binding(ShaderStages::FRAGMENT)
     ], None);
 
+    let bvh_mesh = Mesh::new_with_custom_buffer_usages(context, ssf_data[gen_game::game::smq_proj_build_bvh_smf as usize].as_ref(), 32, None, wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE).unwrap();
+
+    let bvh_bimbo = load_bvh_data(ssf_data[gen_game::game::smq_proj_build_bvh_bin as usize].as_ref()).unwrap();
+
+    let holding1 = context.holding.as_mut().unwrap();
+
+    let bvh_buffer = holding1.device.create_buffer(&wgpu::BufferDescriptor {
+        label: None,
+        mapped_at_creation: false,
+        size: (bvh_bimbo.mega_nodes.len() * std::mem::size_of::<BVHNode>()) as u64,
+        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE
+    });
+    holding1.queue.write_buffer(&bvh_buffer, 0, bytemuck::cast_slice(&bvh_bimbo.mega_nodes));
+
+    let instances_buffer = holding1.device.create_buffer(&wgpu::BufferDescriptor {
+        label: None,
+        mapped_at_creation: false,
+        size: (1024 * std::mem::size_of::<ModelInstance>()) as u64,
+        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE
+    });
+
     let bind_group0post = BindGroupS::new(context, &[
         gen_assets.ubodefferedinfo.get_binding(ShaderStages::FRAGMENT),
         gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT, false),
         gen_assets.renderer_main_renderTexture.attachments[1].get_texture_binding(ShaderStages::FRAGMENT, false),
-        gen_assets.renderer_main_renderTexture.attachments[2].get_texture_binding(ShaderStages::FRAGMENT, false)
+        gen_assets.renderer_main_renderTexture.attachments[2].get_texture_binding(ShaderStages::FRAGMENT, false),
+        bvh_mesh.get_storage_binding(ShaderStages::FRAGMENT, BufferBindingType::Storage { read_only: true }),
+        BindingS {
+            entry_layout: wgpu::BindGroupLayoutEntry {
+                binding: 0, 
+                visibility: wgpu::ShaderStages::FRAGMENT, 
+                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None
+            },
+            entry: wgpu::BindGroupEntry { binding: 1, resource: bvh_buffer.as_entire_binding() }
+        },
+        BindingS {
+            entry_layout: wgpu::BindGroupLayoutEntry { 
+                binding: 0, 
+                visibility: wgpu::ShaderStages::FRAGMENT, 
+                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None
+            },
+            entry: wgpu::BindGroupEntry { binding: 2, resource: instances_buffer.as_entire_binding() }
+        }
     ], None);
 
     let holding = context.holding.as_mut().unwrap();
+    
 
     let mat1layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
         label: None, 
@@ -170,7 +229,11 @@ fn load_assets(context: &mut Context<Renderer>) {
         bind_group0,
         bind_group1,
         bind_group2,
-        bind_group0post
+        bind_group0post,
+        bvh_mesh,
+        bvh_bimbo,
+        instances_buffer,
+        bvh_buffer
     });
 }
 
@@ -180,6 +243,15 @@ struct PointLight {
     pub color: Vec3,
     pub power: f32
 }
+
+#[derive(Component)]
+struct DrawedObject {
+    pub position: Vec3,
+    pub rotation: Quat,
+    pub size: Vec3,
+    pub meshid: usize
+}
+
 
 #[allow(unused)]
 fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) {
@@ -219,6 +291,29 @@ fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) {
         data.gen_assets.ubodefferedinfo.data.lights[i].color = light.color;
         data.gen_assets.ubodefferedinfo.data.lights[i].power = light.power;
     }
+
+    let mut instances_data = Vec::new();
+
+    let mut objects_query = context.world.query::<&DrawedObject>();
+    for (i, pos) in objects_query.iter(&context.world).enumerate() {
+        //let model_matrix = Mat4::from_scale_rotation_translation(pos.size, pos.rotation, pos.position);
+        let model_matrix = Mat4::IDENTITY;
+        
+        instances_data.push(ModelInstance {
+            inv_model: model_matrix.inverse(),
+            bvh_root_node: data.bvh_bimbo.bvh_roots[pos.meshid as usize],
+            id: pos.meshid as u32,
+            _padding: [0; 2]
+        });
+
+        //self.dyn_ubo.data[i].mvp = view_proj * model_matrix;
+    }
+
+    //self.dyn_ubo.upload_data(&context);
+
+    context.holding.as_mut().unwrap().queue.write_buffer(&data.instances_buffer, 0, bytemuck::cast_slice(&instances_data));
+
+    data.gen_assets.ubodefferedinfo.data.instance_count = 2;
 
     data.gen_assets.ubodefferedinfo.upload_data(context);
 

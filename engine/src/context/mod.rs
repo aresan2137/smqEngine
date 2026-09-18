@@ -111,7 +111,7 @@ impl ContextWgpuHolding {
         let adapter_info = adapter.get_info();
         log::info!("using {} with {}", adapter_info.name, adapter_info.backend);
 
-        let surface_format = surface.get_capabilities(&adapter).formats[0];
+        let surface_format = TextureFormat::Rgba8Unorm;
 
         let size = window.inner_size();
 

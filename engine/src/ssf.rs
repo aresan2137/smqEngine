@@ -28,7 +28,8 @@ pub fn save_custom_ssf(file_name: &str, files: Vec<(PathBuf, String, u8)>) {
 // if you change this file your changes will be deleted
 
 #[repr(usize)]
-enum {file_name} {{
+#[allow(non_camel_case_types, unused)]
+pub enum {file_name} {{
 ");
 
     for (i, (path, name, id)) in files.iter().enumerate() {

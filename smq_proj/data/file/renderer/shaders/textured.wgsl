@@ -76,7 +76,7 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 
     out.color = vec4f(textureSample(t_base, s_base, in.uv).xyz, 0.0);
 
-    out.position = vec4f(in.position, 0.5);
+    out.position = vec4f(in.position, 1.0);
 
     out.normal = vec4f(encodeOctahedral(normalize(in.normal)), 0.0, 0.0);
 

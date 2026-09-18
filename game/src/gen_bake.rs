@@ -75,6 +75,8 @@ pub struct UboDefferedInfo {
     pub camera_position: Vec3,
     pub light_count: u32,
     pub lights: [UcLight; 16],
+    pub instance_count: u32,
+    pub _pad0: [u8; 12],
 }
 
 impl Default for UboDefferedInfo {
@@ -83,6 +85,8 @@ impl Default for UboDefferedInfo {
             camera_position: Vec3::ZERO,
             light_count: 0,
             lights: Default::default(),
+            instance_count: 0,
+            _pad0: [0; 12],
         }
     }
 }

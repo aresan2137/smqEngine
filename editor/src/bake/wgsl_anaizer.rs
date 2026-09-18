@@ -334,20 +334,42 @@ fn process_struct_and_give_aligment(ubo: &WgslStruct, ubos: &[WgslStruct], struc
 }
 
 pub fn get_var_size_anigment(var: &WgslStructVar, ubos: &[WgslStruct], struct_code: &mut String, fn_code: &mut String, ret_code: &mut String, ret_struct_code: &mut String) -> Result<(u32, u32), String> {
-    match var.type_.rusty.as_str() {
-        "i32" | "u32" | "f32" => Ok((4, 4)),
-        "Vec2" | "IVec2" | "UVec2" => Ok((8, 8)),
-        "Vec3" | "IVec3" | "UVec3" => Ok((12, 16)),
-        "Vec4" | "IVec4" | "UVec4" => Ok((16, 16)),
-        "Mat3" => Ok((48, 16)),
-        "Mat4" => Ok((64, 16)),
+    let mut type_name = var.type_.rusty.as_str();
+    let mut array_len: u32 = 1;
+    let mut is_array = false;
+
+    if type_name.starts_with('[') && type_name.ends_with(']') {
+        is_array = true;
+        let parts: Vec<&str> = type_name[1..type_name.len()-1].split(';').collect();
+        if parts.len() == 2 {
+            type_name = parts[0].trim();
+            array_len = parts[1].trim().parse().unwrap_or(1);
+        }
+    }
+
+    let (base_size, align) = match type_name {
+        "i32" | "u32" | "f32" => (4, 4),
+        "Vec2" | "IVec2" | "UVec2" => (8, 8),
+        "Vec3" | "IVec3" | "UVec3" => (12, 16),
+        "Vec4" | "IVec4" | "UVec4" => (16, 16),
+        "Mat3" => (48, 16),
+        "Mat4" => (64, 16),
         _ => {
             if var.type_.required_structs.len() >= 1 {
-                return process_struct_and_give_aligment(ubos.iter().find(|ubo| ubo.name == var.type_.required_structs[0]).ok_or("required struct doesnt exist")?, ubos, struct_code, fn_code, ret_code, ret_struct_code);
+                let req_struct = &var.type_.required_structs[0];
+                let ubo = ubos.iter().find(|u| &u.name == req_struct).ok_or(format!("required struct doesnt exist: {}", req_struct))?;
+                process_struct_and_give_aligment(ubo, ubos, struct_code, fn_code, ret_code, ret_struct_code)?
+            } else {
+                return Err(format!("cant give aligment for something unknown: {}", type_name));
             }
-
-            return Err(format!("cant give aligment for somepthing unknown: {}", var.type_.rusty));
         }
+    };
+
+    if is_array {
+        let stride = (base_size + align - 1) & !(align - 1);
+        Ok((stride * array_len, align))
+    } else {
+        Ok((base_size, align))
     }
 }
 

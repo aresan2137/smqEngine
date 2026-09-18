@@ -3,10 +3,13 @@
 // if you change this file your changes will be deleted
 
 #[repr(usize)]
-enum game {
+#[allow(non_camel_case_types, unused)]
+pub enum game {
     file_lakaka_png = 0,
     file_mesh_Cart_smf = 1,
     file_mesh_Cube_smf = 2,
     file_mesh_Floor_smf = 3,
     file_mesh_Walls_smf = 4,
+    smq_proj_build_bvh_smf = 5,
+    smq_proj_build_bvh_bin = 6,
 }
