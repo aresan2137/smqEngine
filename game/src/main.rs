@@ -76,7 +76,7 @@ fn main() {
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
     let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextSettings { 
-        present_mode: PresentMode::AutoVsync
+        present_mode: PresentMode::AutoNoVsync
     }, ContextEvents { 
         renderer: Some(render), 
         on_wgpu_load: Some(load_assets), 
