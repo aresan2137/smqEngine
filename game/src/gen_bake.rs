@@ -14,6 +14,7 @@ pub enum Meshes {
     file_mesh_Cube_smf = 1,
     file_mesh_Floor_smf = 2,
     file_mesh_Walls_smf = 3,
+    file_mesh_Walls_001_smf = 4,
 }
 
 #[repr(C)]
@@ -108,13 +109,11 @@ pub struct GenAssets {
     pub ubodata1: Ubo<UboData1>,
     pub dubodata2: DynamicUbo<DUboData2>,
     pub lakaka_png: TextureS,
-    pub renderer_guasianX_renderTexture: RenderTexture,
-    pub renderer_guasianY_renderTexture: RenderTexture,
     pub renderer_main_renderTexture: RenderTexture,
     pub renderer_post_renderTexture: RenderTexture,
     pub blitinfo: BlitInfo,
     pub blit_group: BindGroupS,
-    pub meshes: [Mesh; 4],
+    pub meshes: [Mesh; 5],
 }
 
 impl GenAssets {
@@ -148,6 +147,13 @@ impl GenAssets {
                 Some("file_mesh_Walls_smf"),
             )
             .unwrap(),
+            Mesh::new(
+                context,
+                ssf_data[5].as_ref(),
+                32,
+                Some("file_mesh_Walls_001_smf"),
+            )
+            .unwrap(),
         ];
 
         let mut ubodefferedinfo = Ubo::new(context, UboDefferedInfo::default());
@@ -167,32 +173,6 @@ impl GenAssets {
             TextureFormat::Rgba8UnormSrgb,
             AddressMode::Repeat,
             Some("lakaka_png"),
-        );
-        let renderer_guasianX_renderTexture = RenderTexture::new(
-            context,
-            1920,
-            1080,
-            &[(
-                TextureFormat::Rgba8Unorm,
-                TextureUsages::RENDER_ATTACHMENT
-                    | TextureUsages::TEXTURE_BINDING
-                    | TextureUsages::empty(),
-                Some("renderer_guasianX_renderTexture_0"),
-            )],
-            None,
-        );
-        let renderer_guasianY_renderTexture = RenderTexture::new(
-            context,
-            1920,
-            1080,
-            &[(
-                TextureFormat::Rgba8Unorm,
-                TextureUsages::RENDER_ATTACHMENT
-                    | TextureUsages::TEXTURE_BINDING
-                    | TextureUsages::empty(),
-                Some("renderer_guasianY_renderTexture_0"),
-            )],
-            None,
         );
         let renderer_main_renderTexture = RenderTexture::new(
             context,
@@ -260,8 +240,6 @@ impl GenAssets {
             ubodata1,
             dubodata2,
             lakaka_png,
-            renderer_guasianX_renderTexture,
-            renderer_guasianY_renderTexture,
             renderer_main_renderTexture,
             renderer_post_renderTexture,
             blitinfo,

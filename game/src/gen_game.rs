@@ -10,6 +10,7 @@ pub enum game {
     file_mesh_Cube_smf = 2,
     file_mesh_Floor_smf = 3,
     file_mesh_Walls_smf = 4,
-    smq_proj_build_bvh_smf = 5,
-    smq_proj_build_bvh_bin = 6,
+    file_mesh_Walls_001_smf = 5,
+    smq_proj_build_bvh_smf = 6,
+    smq_proj_build_bvh_bin = 7,
 }

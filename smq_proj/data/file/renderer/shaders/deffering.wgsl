@@ -114,11 +114,10 @@ fn calculate_blinn_phong(normal: vec3f, V: vec3f, L: vec3f, albedo: vec3f, rough
 
     let shininess = exp2(10.0 * (1.0 - roughness));
 
-    let diffuse_color = albedo * (1.0 - metallic);
+    let diffuse = albedo * (1.0 - metallic);
     
     let specular_color = mix(vec3f(0.04), albedo, metallic);
 
-    let diffuse = diffuse_color;
     var specular_intensity = pow(NdotH, shininess);
     
     specular_intensity = specular_intensity * ((shininess + 8.0) / (8.0 * 3.14159265359));
@@ -167,12 +166,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         let n_dot_l = dot(normal, L);
         if (n_dot_l <= 0.0) { continue; }
 
-        let attenuation = 1.0 / (distance * sqrt(distance) + 0.04);
+        let attenuation = 1.0 / pow(distance + 0.04, 1.8);
         let light_color = light.color * light.power * attenuation; 
 
         let n_dot_v = max(abs(dot(normal, V)), 0.001);
-        let adaptive_bias = 0.08 + (1.0 - n_dot_v) * 0.1;
-        let ray_origin_world = position + normal * adaptive_bias;
+        let ray_origin_world = position + normal * 0.001;
 
         var is_shadowed = false;
 
@@ -239,7 +237,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
     final_color = pow(final_color, vec3f(1.0 / 2.2));
 
-    final_color = ceil(final_color * 32.0) / 32.0;
+    final_color = floor(final_color * 32.0) / 32.0;
 
     return vec4f(final_color, 1.0);
 }

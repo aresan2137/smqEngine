@@ -22,6 +22,7 @@ egui-winit = { version = "0.36", default-features = false, features = ["links"]}
 egui-wgpu = { version = "0.36" }
 bevy_ecs = "0.19"
 web-time = "1.1"
+kira = { version = "0.12.4", features = ["mp3"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
