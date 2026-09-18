@@ -14,3 +14,5 @@ you can do whatever you want with the graphics but you'll need to use wgpu funct
 
 if you want to commit you can make a pull request or what you do? and mabe someday i will see it and if the code is nice i will commit it
 
+# game
+right now i get on my rtx 3050 ti 1200fps in 384/216 or 12fps in 8K

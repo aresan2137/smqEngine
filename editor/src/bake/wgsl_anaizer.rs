@@ -242,7 +242,7 @@ pub fn wgsl_analisys_to_ubos(analisys: &[Vec<WgslStruct>]) -> Result<Vec<WgslStr
     for anlize in analisys.iter() {
         for struc in anlize.iter() {
 
-            if !struc.name.starts_with("Ubo") && !struc.name.starts_with("Uc") {
+            if !struc.name.starts_with("Ubo") && !struc.name.starts_with("Uc") && !struc.name.starts_with("DUbo") {
                 continue;
             }
 
@@ -311,7 +311,12 @@ fn process_struct_and_give_aligment(ubo: &WgslStruct, ubos: &[WgslStruct], struc
         current_offset += var_size;
     }
 
-    let final_size = if max_align > 0 { (current_offset + max_align - 1) & !(max_align - 1) } else { 0 };
+    let mut final_size = if max_align > 0 { (current_offset + max_align - 1) & !(max_align - 1) } else { 0 };
+
+    if ubo.name.starts_with("DUbo") {
+        final_size = (final_size + 255) & !255;
+    }
+
     let end_padding = final_size - current_offset;
     
     if end_padding > 0 {
@@ -319,16 +324,19 @@ fn process_struct_and_give_aligment(ubo: &WgslStruct, ubos: &[WgslStruct], struc
         builder += &format!("\n_pad{}: [0; {}],", pad_counter, end_padding);
     }
 
-    struct_code_cp += &format!("\n}}\n{builder}\n}}\n}}\n}}\n\n");
-
-    *struct_code += &struct_code_cp;
-
     if ubo.name.starts_with("Ubo") {
-        
         *fn_code += &format!("\nlet mut {} = Ubo::new(context, {}::default());", var_name, struct_name);
         *ret_code += &format!("\n{},", var_name);
         *ret_struct_code += &format!("\npub {}: Ubo<{}>,", var_name, struct_name);
+    } else if ubo.name.starts_with("DUbo") {
+        *fn_code += &format!("\nlet mut {} = DynamicUbo::new(context, std::iter::repeat_with({}::default).take(1024).collect());", var_name, struct_name);
+        *ret_code += &format!("\n{},", var_name);
+        *ret_struct_code += &format!("\npub {}: DynamicUbo<{}>,", var_name, struct_name);
     }
+
+    struct_code_cp += &format!("\n}}\n{builder}\n}}\n}}\n}}\n\n");
+
+    *struct_code += &struct_code_cp;
 
     return Ok((final_size, max_align));
 }

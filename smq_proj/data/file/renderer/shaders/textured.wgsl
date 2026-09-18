@@ -6,7 +6,7 @@ struct UboData1 {
     view: mat4x4f
 }
 
-struct UboData2 {
+struct DUboData2 {
     model: mat4x4f
 }
 
@@ -14,7 +14,7 @@ struct UboData2 {
 
 @group(1) @binding(0) var<uniform> data1: UboData1;
 
-@group(2) @binding(0) var<uniform> data2: UboData2;
+@group(2) @binding(0) var<uniform> data2: DUboData2;
 @group(2) @binding(1) var t_base: texture_2d<f32>;
 @group(2) @binding(2) var s_base: sampler;
 
