@@ -4,12 +4,12 @@ use crate::Context;
 
 pub struct BindingS<'a> {
     pub entry_layout: BindGroupLayoutEntry,
-    pub entry: BindGroupEntry<'a>
+    pub entry: BindGroupEntry<'a>,
 }
 
 pub struct BindGroupS {
     pub bind_group: BindGroup,
-    pub bind_group_layout: BindGroupLayout
+    pub bind_group_layout: BindGroupLayout,
 }
 
 impl BindGroupS {
@@ -25,22 +25,33 @@ impl BindGroupS {
             let mut entry = binding.entry.clone();
             entry.binding = i as u32;
             entries.push(entry);
-        }         
+        }
 
-        let bind_group_layout = context.holding.as_ref().unwrap().device.create_bind_group_layout(&BindGroupLayoutDescriptor { 
-            label, 
-            entries: layout_entries.as_slice()
-        });
+        let bind_group_layout = context
+            .holding
+            .as_ref()
+            .unwrap()
+            .device
+            .create_bind_group_layout(&BindGroupLayoutDescriptor {
+                label,
+                entries: layout_entries.as_slice(),
+            });
 
-        let bind_group = context.holding.as_ref().unwrap().device.create_bind_group(&BindGroupDescriptor { 
-            label, 
-            layout: &bind_group_layout, 
-            entries: entries.as_slice()
-        });
+        let bind_group =
+            context
+                .holding
+                .as_ref()
+                .unwrap()
+                .device
+                .create_bind_group(&BindGroupDescriptor {
+                    label,
+                    layout: &bind_group_layout,
+                    entries: entries.as_slice(),
+                });
 
-        return Self { 
+        return Self {
             bind_group_layout,
-            bind_group 
+            bind_group,
         };
     }
 }

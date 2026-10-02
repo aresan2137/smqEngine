@@ -3,10 +3,16 @@ use std::fs;
 
 use bevy_ecs::component::Component;
 use glam::*;
-use smq_engine::{other::bvh::{BVHNode, LoadedBvhData, ModelInstance, load_bvh_data}, *};
+use smq_engine::{
+    other::bvh::{BVHNode, LoadedBvhData, ModelInstance, load_bvh_data},
+    *,
+};
 use wgpu::*;
 
-use crate::{gen_bake::{GenAssets, Meshes}, gen_game};
+use crate::{
+    gen_bake::{GenAssets, Meshes, Textures},
+    gen_game,
+};
 
 #[allow(unused)]
 pub struct Renderer {
@@ -21,12 +27,11 @@ pub struct Renderer {
     bvh_bimbo: LoadedBvhData,
     instances_buffer: Buffer,
     bvh_buffer: Buffer,
-    blur_pakaka: i32
+    blur_pakaka: i32,
 }
 
 #[allow(unused)]
 pub fn load_assets(context: &mut Context<Renderer>) {
-
     #[cfg(not(target_arch = "wasm32"))]
     let ssf_text_vec = fs::read("smq_proj/build/game.ssf").unwrap();
     #[cfg(not(target_arch = "wasm32"))]
@@ -39,28 +44,47 @@ pub fn load_assets(context: &mut Context<Renderer>) {
 
     let mut gen_assets = GenAssets::init_gen_assets(context, &ssf_data);
 
-    gen_assets.ubodata0.data.proj = camera::rh::proj::directx::perspective((60.0_f32).to_radians(), 16.0/9.0, 0.03, 500.0);
+    gen_assets.ubodata0.data.proj =
+        camera::rh::proj::directx::perspective((60.0_f32).to_radians(), 16.0 / 9.0, 0.03, 500.0);
 
     gen_assets.ubodata0.upload_data(context);
     gen_assets.dubodata2.upload_data(context);
 
-    let bind_group0 = BindGroupS::new(context, &[
-        gen_assets.ubodata0.get_binding(ShaderStages::VERTEX)
-    ], None);
+    let bind_group0 = BindGroupS::new(
+        context,
+        &[gen_assets.ubodata0.get_binding(ShaderStages::VERTEX)],
+        None,
+    );
 
-    let bind_group1 = BindGroupS::new(context, &[
-        gen_assets.ubodata1.get_binding(ShaderStages::VERTEX)
-    ], None);
+    let bind_group1 = BindGroupS::new(
+        context,
+        &[gen_assets.ubodata1.get_binding(ShaderStages::VERTEX)],
+        None,
+    );
 
-    let bind_group2 = BindGroupS::new(context, &[
-        gen_assets.dubodata2.get_binding(ShaderStages::VERTEX),
-        gen_assets.lakaka_png.get_texture_binding(ShaderStages::FRAGMENT),
-        gen_assets.lakaka_png.get_sampler_binding(ShaderStages::FRAGMENT)
-    ], None);
+    let bind_group2 = BindGroupS::new(
+        context,
+        &[
+            gen_assets.dubodata2.get_binding(ShaderStages::VERTEX),
+            gen_assets.textures[Textures::rock_png as usize]
+                .get_texture_binding(ShaderStages::FRAGMENT),
+            gen_assets.textures[Textures::rock_png as usize]
+                .get_sampler_binding(ShaderStages::FRAGMENT),
+        ],
+        None,
+    );
 
-    let bvh_mesh = Mesh::new_with_custom_buffer_usages(context, ssf_data[gen_game::game::smq_proj_build_bvh_smf as usize].as_ref(), 32, None, BufferUsages::COPY_DST | BufferUsages::STORAGE).unwrap();
+    let bvh_mesh = Mesh::new_with_custom_buffer_usages(
+        context,
+        ssf_data[gen_game::game::smq_proj_build_bvh_smf as usize].as_ref(),
+        32,
+        None,
+        BufferUsages::COPY_DST | BufferUsages::STORAGE,
+    )
+    .unwrap();
 
-    let bvh_bimbo = load_bvh_data(ssf_data[gen_game::game::smq_proj_build_bvh_bin as usize].as_ref()).unwrap();
+    let bvh_bimbo =
+        load_bvh_data(ssf_data[gen_game::game::smq_proj_build_bvh_bin as usize].as_ref()).unwrap();
 
     let holding1 = context.holding.as_mut().unwrap();
 
@@ -68,84 +92,132 @@ pub fn load_assets(context: &mut Context<Renderer>) {
         label: None,
         mapped_at_creation: false,
         size: (bvh_bimbo.mega_nodes.len() * std::mem::size_of::<BVHNode>()) as u64,
-        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE
+        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
     });
-    holding1.queue.write_buffer(&bvh_buffer, 0, bytemuck::cast_slice(&bvh_bimbo.mega_nodes));
+    holding1
+        .queue
+        .write_buffer(&bvh_buffer, 0, bytemuck::cast_slice(&bvh_bimbo.mega_nodes));
 
     let instances_buffer = holding1.device.create_buffer(&BufferDescriptor {
         label: None,
         mapped_at_creation: false,
         size: (1024 * std::mem::size_of::<ModelInstance>()) as u64,
-        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE
+        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
     });
 
-    let bind_group0post = BindGroupS::new(context, &[
-        gen_assets.ubodefferedinfo.get_binding(ShaderStages::FRAGMENT),
-        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT, false),
-        gen_assets.renderer_main_renderTexture.attachments[1].get_texture_binding(ShaderStages::FRAGMENT, false),
-        gen_assets.renderer_main_renderTexture.attachments[2].get_texture_binding(ShaderStages::FRAGMENT, false),
-        bvh_mesh.get_storage_binding(ShaderStages::FRAGMENT, BufferBindingType::Storage { read_only: true }),
-        BindingS {
-            entry_layout: wgpu::BindGroupLayoutEntry {
-                binding: 0, 
-                visibility: wgpu::ShaderStages::FRAGMENT, 
-                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None
+    let bind_group0post = BindGroupS::new(
+        context,
+        &[
+            gen_assets
+                .ubodefferedinfo
+                .get_binding(ShaderStages::FRAGMENT),
+            gen_assets.renderer_main_renderTexture.attachments[0]
+                .get_texture_binding(ShaderStages::FRAGMENT, false),
+            gen_assets.renderer_main_renderTexture.attachments[1]
+                .get_texture_binding(ShaderStages::FRAGMENT, false),
+            gen_assets.renderer_main_renderTexture.attachments[2]
+                .get_texture_binding(ShaderStages::FRAGMENT, false),
+            bvh_mesh.get_storage_binding(
+                ShaderStages::FRAGMENT,
+                BufferBindingType::Storage { read_only: true },
+            ),
+            BindingS {
+                entry_layout: wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                entry: wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: bvh_buffer.as_entire_binding(),
+                },
             },
-            entry: wgpu::BindGroupEntry { binding: 1, resource: bvh_buffer.as_entire_binding() }
-        },
-        BindingS {
-            entry_layout: wgpu::BindGroupLayoutEntry { 
-                binding: 0, 
-                visibility: wgpu::ShaderStages::FRAGMENT, 
-                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None
+            BindingS {
+                entry_layout: wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                entry: wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: instances_buffer.as_entire_binding(),
+                },
             },
-            entry: wgpu::BindGroupEntry { binding: 2, resource: instances_buffer.as_entire_binding() }
-        }
-    ], None);
+        ],
+        None,
+    );
 
     let holding = context.holding.as_mut().unwrap();
-    
 
-    let mat1layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
-        label: None, 
-        bind_group_layouts: &[
-            Some(&bind_group0.bind_group_layout),
-            Some(&bind_group1.bind_group_layout),
-            Some(&bind_group2.bind_group_layout),
-            None
-        ],
-        immediate_size: 0
+    let mat1layout = holding
+        .device
+        .create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: None,
+            bind_group_layouts: &[
+                Some(&bind_group0.bind_group_layout),
+                Some(&bind_group1.bind_group_layout),
+                Some(&bind_group2.bind_group_layout),
+                None,
+            ],
+            immediate_size: 0,
+        });
+
+    let mat1module = holding.device.create_shader_module(ShaderModuleDescriptor {
+        label: None,
+        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
+            "../../smq_proj/assets/renderer/shaders/textured.wgsl"
+        ))),
     });
 
-    let mat1module = holding.device.create_shader_module(ShaderModuleDescriptor { 
-        label: None, 
-        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/textured.wgsl")))
+    let mat2layout = holding
+        .device
+        .create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: None,
+            bind_group_layouts: &[Some(&bind_group0post.bind_group_layout), None, None, None],
+            immediate_size: 0,
+        });
+
+    let mat2module = holding.device.create_shader_module(ShaderModuleDescriptor {
+        label: None,
+        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
+            "../../smq_proj/assets/renderer/shaders/deffering.wgsl"
+        ))),
     });
 
-    let mat2layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
-        label: None, 
-        bind_group_layouts: &[
-            Some(&bind_group0post.bind_group_layout),
-            None,
-            None,
-            None
-        ],
-        immediate_size: 0
-    });
+    let mat1 = RenderMaterial::new(
+        context,
+        Some(Face::Back),
+        None,
+        &gen_assets.renderer_main_renderTexture,
+        &mat1module,
+        get_default_vert_layout(),
+        Some(CompareFunction::Less),
+        &mat1layout,
+    );
 
-    let mat2module = holding.device.create_shader_module(ShaderModuleDescriptor { 
-        label: None, 
-        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/deffering.wgsl")))
-    });
+    let mat2 = RenderMaterial::new(
+        context,
+        None,
+        None,
+        &gen_assets.renderer_post_renderTexture,
+        &mat2module,
+        None,
+        None,
+        &mat2layout,
+    );
 
-    let mat1 = RenderMaterial::new(context, Some(Face::Back), None, &gen_assets.renderer_main_renderTexture, 
-        &mat1module, get_default_vert_layout(), Some(CompareFunction::Less), &mat1layout);
-
-    let mat2 = RenderMaterial::new(context, None, None, &gen_assets.renderer_post_renderTexture, 
-        &mat2module, None, None, &mat2layout);
-
-    context.data = Some(Renderer { 
-        gen_assets, 
+    context.data = Some(Renderer {
+        gen_assets,
         mat1,
         mat2,
         bind_group0,
@@ -156,7 +228,7 @@ pub fn load_assets(context: &mut Context<Renderer>) {
         bvh_bimbo,
         instances_buffer,
         bvh_buffer,
-        blur_pakaka: -1
+        blur_pakaka: -1,
     });
 }
 
@@ -164,7 +236,7 @@ pub fn load_assets(context: &mut Context<Renderer>) {
 pub struct PointLight {
     pub position: Vec3,
     pub color: Vec3,
-    pub power: f32
+    pub power: f32,
 }
 
 #[derive(Component)]
@@ -172,7 +244,17 @@ pub struct DrawedObject {
     pub position: Vec3,
     pub rotation: Quat,
     pub size: Vec3,
-    pub meshid: Meshes
+    pub meshid: Meshes,
+    pub textureid: Textures,
+}
+
+#[derive(Component)]
+pub struct TransparentObject {
+    pub position: Vec3,
+    pub rotation: Quat,
+    pub size: Vec3,
+    pub meshid: Meshes,
+    pub textureid: Textures,
 }
 
 #[allow(unused)]
@@ -195,7 +277,6 @@ pub fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) 
         data.gen_assets.ubodata1.upload_data(context);
 
         data.gen_assets.ubodefferedinfo.data.camera_position = cam.position;
-
     } else {
         println!("NO CAMERA!!!");
     }
@@ -220,13 +301,14 @@ pub fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) 
     let mut objects_query = context.world.query::<&DrawedObject>();
     let mut objects_to_draw = Vec::new();
     for (i, pos) in objects_query.iter(&context.world).enumerate() {
-        let model_matrix = Mat4::from_scale_rotation_translation(pos.size, pos.rotation, pos.position);
-        
+        let model_matrix =
+            Mat4::from_scale_rotation_translation(pos.size, pos.rotation, pos.position);
+
         instances_data.push(ModelInstance {
             inv_model: model_matrix.inverse(),
             bvh_root_node: data.bvh_bimbo.bvh_roots[pos.meshid as usize],
             id: pos.meshid as u32,
-            _padding: [0; 2]
+            _padding: [0; 2],
         });
 
         data.gen_assets.dubodata2.data[i].model = model_matrix;
@@ -238,30 +320,40 @@ pub fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) 
 
     data.gen_assets.dubodata2.upload_data(&context);
 
-    context.holding.as_mut().unwrap().queue.write_buffer(&data.instances_buffer, 0, bytemuck::cast_slice(&instances_data));
+    context.holding.as_mut().unwrap().queue.write_buffer(
+        &data.instances_buffer,
+        0,
+        bytemuck::cast_slice(&instances_data),
+    );
 
     data.gen_assets.ubodefferedinfo.upload_data(context);
 
     if let Some(mut frame) = context.start_frame() {
         {
-            let mut render_pass = context.get_render_pass(&mut frame, &data.gen_assets.renderer_main_renderTexture);
+            let mut render_pass =
+                context.get_render_pass(&mut frame, &data.gen_assets.renderer_main_renderTexture);
 
             render_pass.set_pipeline(&mut data.mat1.pipeline);
 
             render_pass.set_bind_group(0, &data.bind_group0.bind_group, &[]);
             render_pass.set_bind_group(1, &data.bind_group1.bind_group, &[]);
 
-            for (i, id) in objects_to_draw.iter().enumerate() {       
-                let gutid = id.clone() as usize;  
+            for (i, id) in objects_to_draw.iter().enumerate() {
+                let gutid = id.clone() as usize;
                 render_pass.set_bind_group(2, &data.bind_group2.bind_group, &[i as u32 * 256]);
 
                 render_pass.set_vertex_buffer(0, data.gen_assets.meshes[gutid].buffer.slice(..));
                 render_pass.draw(0..data.gen_assets.meshes[gutid].vertex_count, 0..1);
             }
+
+            //let mut transparent_query = context.world.query::<&TransparentObject>();
+
+
         }
 
         {
-            let mut render_pass = context.get_render_pass(&mut frame, &data.gen_assets.renderer_post_renderTexture);
+            let mut render_pass =
+                context.get_render_pass(&mut frame, &data.gen_assets.renderer_post_renderTexture);
 
             render_pass.set_pipeline(&mut data.mat2.pipeline);
 
@@ -270,14 +362,16 @@ pub fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) 
             render_pass.draw(0..3, 0..1);
         }
 
-        context.blit_screen(&mut frame, &data.gen_assets.blitinfo, &data.gen_assets.blit_group);
-        
+        context.blit_screen(
+            &mut frame,
+            &data.gen_assets.blitinfo,
+            &data.gen_assets.blit_group,
+        );
 
         context.draw_egui(&mut frame, full_output);
 
         context.end_frame(frame);
-    }   
+    }
 
     context.data = Some(data);
 }
-

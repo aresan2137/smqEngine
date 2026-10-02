@@ -5,12 +5,12 @@
 #[repr(usize)]
 #[allow(non_camel_case_types, unused)]
 pub enum game {
-    file_lakaka_png = 0,
-    file_mesh_Cart_smf = 1,
-    file_mesh_Cube_smf = 2,
-    file_mesh_Floor_smf = 3,
-    file_mesh_Walls_smf = 4,
-    file_mesh_Walls_001_smf = 5,
+    smq_proj_assets_mesh_Cart_smf = 0,
+    smq_proj_assets_mesh_Cube_smf = 1,
+    smq_proj_assets_mesh_Floor_smf = 2,
+    smq_proj_assets_mesh_Walls_smf = 3,
+    smq_proj_assets_mesh_Walls_001_smf = 4,
+    smq_proj_assets_rock_png = 5,
     smq_proj_build_bvh_smf = 6,
     smq_proj_build_bvh_bin = 7,
 }

@@ -6,15 +6,32 @@ use crate::{BindingS, Context};
 
 pub struct Mesh {
     pub vertex_count: u32,
-    pub buffer: Buffer
+    pub buffer: Buffer,
 }
 
 impl Mesh {
-    pub fn new<D>(context: &Context<D>, data: &[u8], stride: u64, label: Option<&str>) -> Result<Self, Box<dyn Error>> {
-        return Mesh::new_with_custom_buffer_usages(context, data, stride, label, BufferUsages::COPY_DST | BufferUsages::VERTEX);
+    pub fn new<D>(
+        context: &Context<D>,
+        data: &[u8],
+        stride: u64,
+        label: Option<&str>,
+    ) -> Result<Self, Box<dyn Error>> {
+        return Mesh::new_with_custom_buffer_usages(
+            context,
+            data,
+            stride,
+            label,
+            BufferUsages::COPY_DST | BufferUsages::VERTEX,
+        );
     }
 
-    pub fn new_with_custom_buffer_usages<D>(context: &Context<D>, data: &[u8], stride: u64, label: Option<&str>, usage: BufferUsages) -> Result<Self, Box<dyn Error>> {
+    pub fn new_with_custom_buffer_usages<D>(
+        context: &Context<D>,
+        data: &[u8],
+        stride: u64,
+        label: Option<&str>,
+        usage: BufferUsages,
+    ) -> Result<Self, Box<dyn Error>> {
         if data.len() < 9 || data[0] != 0b10110000 {
             return Err("failed to parse smf file: file too short".into());
         }
@@ -36,53 +53,84 @@ impl Mesh {
 
         let buffer_size = verts_data_size as u64;
 
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor {
-            label,
-            mapped_at_creation: false,
-            size: buffer_size,
-            usage 
-        });
+        let buffer = context
+            .holding
+            .as_ref()
+            .unwrap()
+            .device
+            .create_buffer(&BufferDescriptor {
+                label,
+                mapped_at_creation: false,
+                size: buffer_size,
+                usage,
+            });
 
-        context.holding.as_ref().unwrap().queue.write_buffer(&buffer, 0, vertex_data);
+        context
+            .holding
+            .as_ref()
+            .unwrap()
+            .queue
+            .write_buffer(&buffer, 0, vertex_data);
 
         return Ok(Self {
             vertex_count: vertex_count as u32,
-            buffer
+            buffer,
         });
     }
 
-    pub fn from_raw_data<D>(context: &Context<D>, vertex_count: u32, vertex_data: &[u8], label: Option<&str>, usage: BufferUsages) -> Self {
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&wgpu::BufferDescriptor {
-            label,
-            mapped_at_creation: false,
-            size: vertex_data.len() as u64,
-            usage
-        });
+    pub fn from_raw_data<D>(
+        context: &Context<D>,
+        vertex_count: u32,
+        vertex_data: &[u8],
+        label: Option<&str>,
+        usage: BufferUsages,
+    ) -> Self {
+        let buffer =
+            context
+                .holding
+                .as_ref()
+                .unwrap()
+                .device
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label,
+                    mapped_at_creation: false,
+                    size: vertex_data.len() as u64,
+                    usage,
+                });
 
-        context.holding.as_ref().unwrap().queue.write_buffer(&buffer, 0, vertex_data);
+        context
+            .holding
+            .as_ref()
+            .unwrap()
+            .queue
+            .write_buffer(&buffer, 0, vertex_data);
 
-        return Self { 
+        return Self {
             vertex_count,
-            buffer 
+            buffer,
         };
     }
 
-    pub fn get_storage_binding(&self, visibility: ShaderStages, ty: BufferBindingType) -> BindingS<'_> {
+    pub fn get_storage_binding(
+        &self,
+        visibility: ShaderStages,
+        ty: BufferBindingType,
+    ) -> BindingS<'_> {
         return BindingS {
-            entry_layout: BindGroupLayoutEntry { 
-                binding: 0, 
-                visibility, 
-                ty: BindingType::Buffer { 
+            entry_layout: BindGroupLayoutEntry {
+                binding: 0,
+                visibility,
+                ty: BindingType::Buffer {
                     ty,
-                    has_dynamic_offset: false, 
-                    min_binding_size: None 
-                }, 
-                count: None
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
             },
-            entry: BindGroupEntry { 
-                binding: 0, 
-                resource: self.buffer.as_entire_binding()
-            }
+            entry: BindGroupEntry {
+                binding: 0,
+                resource: self.buffer.as_entire_binding(),
+            },
         };
     }
 }

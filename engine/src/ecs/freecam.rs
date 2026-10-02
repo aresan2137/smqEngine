@@ -13,12 +13,11 @@ pub struct FreeCamera {
     pub yaw: f32,
     pub speed: f32,
     pub sensitivity: f32,
-    pub is_controlling: bool
+    pub is_controlling: bool,
 }
 
 pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query<&mut FreeCamera>) {
     for mut cam in query.iter_mut() {
-        
         if input.pressed(KeyCode::KeyZ) {
             cam.is_controlling = !cam.is_controlling;
         }
@@ -27,7 +26,7 @@ pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query
         }
 
         if !cam.is_controlling {
-            continue; 
+            continue;
         }
 
         cam.yaw -= input.mouse_delta.0 * cam.sensitivity;
@@ -44,12 +43,24 @@ pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query
 
         let velocity = cam.speed * time.delta;
 
-        if input.down(KeyCode::KeyW) { cam.position += forward * velocity; }
-        if input.down(KeyCode::KeyS) { cam.position -= forward * velocity; }
-        if input.down(KeyCode::KeyD) { cam.position += right * velocity; }
-        if input.down(KeyCode::KeyA) { cam.position -= right * velocity; }
-        if input.down(KeyCode::KeyE) { cam.position += up * velocity; }
-        if input.down(KeyCode::KeyQ) { cam.position -= up * velocity; }
+        if input.down(KeyCode::KeyW) {
+            cam.position += forward * velocity;
+        }
+        if input.down(KeyCode::KeyS) {
+            cam.position -= forward * velocity;
+        }
+        if input.down(KeyCode::KeyD) {
+            cam.position += right * velocity;
+        }
+        if input.down(KeyCode::KeyA) {
+            cam.position -= right * velocity;
+        }
+        if input.down(KeyCode::KeyE) {
+            cam.position += up * velocity;
+        }
+        if input.down(KeyCode::KeyQ) {
+            cam.position -= up * velocity;
+        }
     }
 }
 
@@ -66,5 +77,5 @@ pub fn f11_system(world: &World, window: &Option<Arc<Window>>) {
         }
     } else {
         log::error!("window doesn't exist");
-    }    
+    }
 }

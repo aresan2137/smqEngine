@@ -5,7 +5,7 @@ pub fn init() {
     #[cfg(target_arch = "wasm32")]
     {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
-        
+
         console_log::init_with_level(log::Level::Debug).expect("failed to init logger");
     }
 
@@ -48,7 +48,7 @@ impl<T, E: Debug> LogExpect<T> for Result<T, E> {
                 let line = location.line();
 
                 log::error!("[FATAL] {}:{} -> {}: {:?}", file, line, msg, e);
-                
+
                 panic!("{}: {:?}", msg, e);
             }
         }
@@ -66,7 +66,7 @@ impl<T> LogExpect<T> for Option<T> {
                 let line = location.line();
 
                 log::error!("[FATAL] {}:{} -> null: {}", file, line, msg);
-                
+
                 panic!("{}", msg);
             }
         }

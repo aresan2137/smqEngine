@@ -3,8 +3,15 @@ use std::sync::Arc;
 use bevy_ecs::prelude::*;
 use egui_wgpu::RendererOptions;
 use wgpu::*;
-use winit::{application::ApplicationHandler, dpi::PhysicalSize, event::{DeviceEvent, DeviceId, WindowEvent}, event_loop::ActiveEventLoop, keyboard::PhysicalKey, window::{Window, WindowId}};
 use winit::event_loop::EventLoopProxy;
+use winit::{
+    application::ApplicationHandler,
+    dpi::PhysicalSize,
+    event::{DeviceEvent, DeviceId, WindowEvent},
+    event_loop::ActiveEventLoop,
+    keyboard::PhysicalKey,
+    window::{Window, WindowId},
+};
 
 use crate::{Delta, Inputs, f11_system};
 
@@ -28,32 +35,37 @@ pub struct Context<'a, D> {
     pub surface: Option<Arc<Surface<'a>>>,
     pub holding: Option<ContextWgpuHolding>,
     pub data: Option<D>,
-    pub proxy: EventLoopProxy<ContextUserEvent>
+    pub proxy: EventLoopProxy<ContextUserEvent>,
 }
 
 pub struct ContextEvents<D> {
     pub renderer: Option<fn(&mut Context<D>, ::egui::FullOutput)>,
     pub on_wgpu_load: Option<fn(&mut Context<D>)>,
     pub pre_schedule: Option<fn(&mut Context<D>)>,
-    pub on_exit: Option<fn(&mut Context<D>)>
+    pub on_exit: Option<fn(&mut Context<D>)>,
 }
 
 #[derive(Clone)]
 pub struct ContextSettings {
-    pub present_mode: PresentMode 
+    pub present_mode: PresentMode,
 }
 
 impl Default for ContextSettings {
     fn default() -> Self {
-        return Self { 
-            present_mode: PresentMode::AutoVsync
+        return Self {
+            present_mode: PresentMode::AutoVsync,
         };
     }
 }
 
-
 impl<D> Context<'_, D> {
-    pub fn new(world: World, schedule: Schedule, proxy: EventLoopProxy<ContextUserEvent>, settings: ContextSettings, events: ContextEvents<D>) -> Self {        
+    pub fn new(
+        world: World,
+        schedule: Schedule,
+        proxy: EventLoopProxy<ContextUserEvent>,
+        settings: ContextSettings,
+        events: ContextEvents<D>,
+    ) -> Self {
         return Self {
             window: None,
             world,
@@ -64,50 +76,66 @@ impl<D> Context<'_, D> {
             surface: None,
             holding: None,
             data: None,
-            proxy
+            proxy,
         };
     }
 
     pub fn resize(&mut self, new_size: &PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             if let Some(holding) = self.holding.as_mut() {
-                if holding.surface_config.width != new_size.width || holding.surface_config.height != new_size.height {
+                if holding.surface_config.width != new_size.width
+                    || holding.surface_config.height != new_size.height
+                {
                     holding.surface_config.width = new_size.width;
                     holding.surface_config.height = new_size.height;
-                    self.surface.as_ref().unwrap().configure(&holding.device, &holding.surface_config);
+                    self.surface
+                        .as_ref()
+                        .unwrap()
+                        .configure(&holding.device, &holding.surface_config);
                 }
-            }            
+            }
         }
     }
 }
 
 pub struct ContextWgpuHolding {
-    pub device: Device, 
+    pub device: Device,
     pub queue: Queue,
     pub egui_renderer: egui_wgpu::Renderer,
     pub egui_state: egui_winit::State,
     pub surface_config: wgt::SurfaceConfiguration<Vec<TextureFormat>>,
-    pub surface_format: TextureFormat
+    pub surface_format: TextureFormat,
 }
 
 impl ContextWgpuHolding {
-    async fn new(window: Arc<Window>, instance: &Instance, surface: &Surface<'_>, settings: &ContextSettings) -> Self {
-        let adapter = instance.request_adapter(&RequestAdapterOptions { 
-            power_preference: PowerPreference::HighPerformance,
-            force_fallback_adapter: false, 
-            compatible_surface: Some(&surface),
-            apply_limit_buckets: false
-        }).await.expect("failed to get adapter");
+    async fn new(
+        window: Arc<Window>,
+        instance: &Instance,
+        surface: &Surface<'_>,
+        settings: &ContextSettings,
+    ) -> Self {
+        let adapter = instance
+            .request_adapter(&RequestAdapterOptions {
+                power_preference: PowerPreference::HighPerformance,
+                force_fallback_adapter: false,
+                compatible_surface: Some(&surface),
+                apply_limit_buckets: false,
+            })
+            .await
+            .expect("failed to get adapter");
 
-        let (device, queue) = adapter.request_device(&DeviceDescriptor { 
-            label: None, 
-            required_features: Features::empty(), 
-            required_limits: Limits::defaults(), 
-            experimental_features: ExperimentalFeatures::disabled(), 
-            memory_hints: MemoryHints::Performance, 
-            trace: Trace::Off
-        }).await.expect("failed to get device");
-        
+        let (device, queue) = adapter
+            .request_device(&DeviceDescriptor {
+                label: None,
+                required_features: Features::empty(),
+                required_limits: Limits::defaults(),
+                experimental_features: ExperimentalFeatures::disabled(),
+                memory_hints: MemoryHints::Performance,
+                trace: Trace::Off,
+            })
+            .await
+            .expect("failed to get device");
+
         let adapter_info = adapter.get_info();
         log::info!("using {} with {}", adapter_info.name, adapter_info.backend);
 
@@ -124,17 +152,21 @@ impl ContextWgpuHolding {
             alpha_mode: CompositeAlphaMode::Auto,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
-            color_space: SurfaceColorSpace::Auto
+            color_space: SurfaceColorSpace::Auto,
         };
 
         surface.configure(&device, &surface_config);
 
-        let egui_renderer = egui_wgpu::Renderer::new(&device, surface_format, RendererOptions { 
-            msaa_samples: 1, 
-            depth_stencil_format: None,
-            dithering: false, 
-            predictable_texture_filtering: false 
-        });
+        let egui_renderer = egui_wgpu::Renderer::new(
+            &device,
+            surface_format,
+            RendererOptions {
+                msaa_samples: 1,
+                depth_stencil_format: None,
+                dithering: false,
+                predictable_texture_filtering: false,
+            },
+        );
 
         let egui_state = egui_winit::State::new(
             ui(),
@@ -142,7 +174,7 @@ impl ContextWgpuHolding {
             &window,
             Some(window.scale_factor() as f32),
             None,
-            None
+            None,
         );
 
         return Self {
@@ -151,14 +183,14 @@ impl ContextWgpuHolding {
             egui_renderer,
             egui_state,
             surface_config,
-            surface_format
+            surface_format,
         };
     }
 }
 
 #[allow(unused)]
 pub enum ContextUserEvent {
-    GpuReady(ContextWgpuHolding)
+    GpuReady(ContextWgpuHolding),
 }
 
 impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
@@ -169,12 +201,12 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                 .with_inner_size(winit::dpi::PhysicalSize::new(1280, 720));
 
             let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-            
+
             #[cfg(target_arch = "wasm32")]
             {
                 use winit::platform::web::WindowExtWebSys;
                 let canvas = window.canvas().expect("failed to get canvas");
-                
+
                 canvas.set_width(1280);
                 canvas.set_height(720);
                 canvas.set_attribute("tabindex", "0").unwrap();
@@ -187,24 +219,41 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
 
             let instance = Instance::default();
 
-            let surface = Arc::new(instance.create_surface(window.clone()).expect("failed to get surface"));
+            let surface = Arc::new(
+                instance
+                    .create_surface(window.clone())
+                    .expect("failed to get surface"),
+            );
 
             #[cfg(target_arch = "wasm32")]
             {
                 let event_proxy = self.proxy.clone();
 
                 let window_clone = window.clone();
-                let surface_clone = surface.clone();    
-                let settings_clone = self.settings.clone();            
+                let surface_clone = surface.clone();
+                let settings_clone = self.settings.clone();
 
                 wasm_bindgen_futures::spawn_local(async move {
-                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(ContextWgpuHolding::new(window_clone, &instance, &surface_clone, &settings_clone).await));
+                    let _ = event_proxy.send_event(ContextUserEvent::GpuReady(
+                        ContextWgpuHolding::new(
+                            window_clone,
+                            &instance,
+                            &surface_clone,
+                            &settings_clone,
+                        )
+                        .await,
+                    ));
                 });
             }
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                self.holding = Some(pollster::block_on(ContextWgpuHolding::new(window.clone(), &instance, &surface, &self.settings)));
+                self.holding = Some(pollster::block_on(ContextWgpuHolding::new(
+                    window.clone(),
+                    &instance,
+                    &surface,
+                    &self.settings,
+                )));
             }
 
             self.surface = Some(surface);
@@ -213,7 +262,7 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
             #[cfg(not(target_arch = "wasm32"))]
             if let Some(func) = self.events.on_wgpu_load {
                 (func)(self);
-            }            
+            }
         }
     }
 
@@ -228,13 +277,22 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
         }
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
-        let Some(window) = self.window.as_ref() else { return };
-        if window_id != window.id() { return; }
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if window_id != window.id() {
+            return;
+        }
 
         if let Some(holding) = self.holding.as_mut() {
             let response = holding.egui_state.on_window_event(window.as_ref(), &event);
-            
+
             if response.consumed {
                 return;
             }
@@ -243,7 +301,10 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
         match event {
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(keycode) = event.physical_key {
-                    self.world.get_resource_mut::<Inputs>().expect("input not found").on_input(&event, keycode);
+                    self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found")
+                        .on_input(&event, keycode);
                 }
 
                 #[cfg(not(target_arch = "wasm32"))]
@@ -268,7 +329,10 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                 if self.holding.is_some() {
                     self.start_egui_record();
 
-                    self.world.get_resource_mut::<Delta>().expect("delta not found").update_delta();
+                    self.world
+                        .get_resource_mut::<Delta>()
+                        .expect("delta not found")
+                        .update_delta();
 
                     if let Some(func) = self.events.pre_schedule {
                         (func)(self);
@@ -278,23 +342,31 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
 
                     let mut full_output = self.end_egui_record();
 
-                    if self.is_minimized { 
+                    if self.is_minimized {
                         full_output.textures_delta.clear();
-                        return; 
+                        return;
                     }
 
                     if let Some(func) = self.events.renderer {
                         (func)(self, full_output);
                     }
 
-                    self.world.get_resource_mut::<Inputs>().expect("input not found").end_frame();
+                    self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found")
+                        .end_frame();
                 }
             }
             _ => {}
         }
     }
 
-    fn device_event(&mut self, _event_loop: &ActiveEventLoop, _device_id: DeviceId, event: DeviceEvent) {
+    fn device_event(
+        &mut self,
+        _event_loop: &ActiveEventLoop,
+        _device_id: DeviceId,
+        event: DeviceEvent,
+    ) {
         if let DeviceEvent::MouseMotion { delta } = event {
             let mut input = self.world.resource_mut::<Inputs>();
             input.mouse_delta.0 += delta.0 as f32;
@@ -308,4 +380,3 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
         }
     }
 }
-

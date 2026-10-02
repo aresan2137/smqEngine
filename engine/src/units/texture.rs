@@ -6,7 +6,7 @@ use crate::*;
 pub struct TextureS {
     pub texture: Texture,
     pub view: TextureView,
-    pub sampler: Sampler
+    pub sampler: Sampler,
 }
 
 #[derive(PartialEq)]
@@ -14,11 +14,19 @@ pub enum SamplingMode {
     Nearest,
     Bilinear,
     Trilinear,
-    NearestMapped
+    NearestMapped,
 }
 
 impl TextureS {
-    pub fn new<D>(context: &Context<D>, bytes: &[u8], sampling: SamplingMode, mitmap_level: u32, format: TextureFormat, repeater: AddressMode, label: Option<&str>) -> Self {
+    pub fn new<D>(
+        context: &Context<D>,
+        bytes: &[u8],
+        sampling: SamplingMode,
+        mitmap_level: u32,
+        format: TextureFormat,
+        repeater: AddressMode,
+        label: Option<&str>,
+    ) -> Self {
         let holding = context.holding.as_ref().unwrap();
         let img = image::load_from_memory(bytes).expect("failed to load texture");
         let dimensions = img.dimensions();
@@ -26,7 +34,7 @@ impl TextureS {
         let size = Extent3d {
             width: dimensions.0,
             height: dimensions.1,
-            depth_or_array_layers: 1
+            depth_or_array_layers: 1,
         };
 
         let texture = holding.device.create_texture(&wgpu::TextureDescriptor {
@@ -37,7 +45,7 @@ impl TextureS {
             dimension: TextureDimension::D2,
             format,
             usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
-            view_formats: &[]
+            view_formats: &[],
         });
 
         let mut current_rgba = img.to_rgba8();
@@ -48,7 +56,7 @@ impl TextureS {
             let mip_size = Extent3d {
                 width: current_width,
                 height: current_height,
-                depth_or_array_layers: 1
+                depth_or_array_layers: 1,
             };
 
             holding.queue.write_texture(
@@ -56,15 +64,15 @@ impl TextureS {
                     texture: &texture,
                     mip_level: level,
                     origin: Origin3d::ZERO,
-                    aspect: TextureAspect::All
+                    aspect: TextureAspect::All,
                 },
                 &current_rgba,
                 TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(4 * current_width),
-                    rows_per_image: Some(current_height)
+                    rows_per_image: Some(current_height),
                 },
-                mip_size
+                mip_size,
             );
 
             if level < mitmap_level - 1 {
@@ -72,10 +80,10 @@ impl TextureS {
                 let next_height = (current_height / 2).max(1);
 
                 let next_image = image::imageops::resize(
-                    &current_rgba, 
-                    next_width, 
-                    next_height, 
-                    image::imageops::FilterType::Triangle 
+                    &current_rgba,
+                    next_width,
+                    next_height,
+                    image::imageops::FilterType::Triangle,
                 );
 
                 current_rgba = next_image;
@@ -85,21 +93,39 @@ impl TextureS {
         }
 
         let view = texture.create_view(&TextureViewDescriptor::default());
-        let sampler = holding.device.create_sampler(&SamplerDescriptor { 
-            label: None, 
+        let sampler = holding.device.create_sampler(&SamplerDescriptor {
+            label: None,
             address_mode_u: repeater,
             address_mode_v: repeater,
             address_mode_w: repeater,
-            mag_filter: if sampling == SamplingMode::Nearest || sampling == SamplingMode::NearestMapped { FilterMode::Nearest } else { FilterMode::Linear }, 
-            min_filter: if sampling == SamplingMode::Nearest || sampling == SamplingMode::NearestMapped { FilterMode::Nearest } else { FilterMode::Linear }, 
-            mipmap_filter: if sampling == SamplingMode::Trilinear || sampling == SamplingMode::NearestMapped { MipmapFilterMode::Linear } else { MipmapFilterMode::Nearest }, 
+            mag_filter: if sampling == SamplingMode::Nearest
+                || sampling == SamplingMode::NearestMapped
+            {
+                FilterMode::Nearest
+            } else {
+                FilterMode::Linear
+            },
+            min_filter: if sampling == SamplingMode::Nearest
+                || sampling == SamplingMode::NearestMapped
+            {
+                FilterMode::Nearest
+            } else {
+                FilterMode::Linear
+            },
+            mipmap_filter: if sampling == SamplingMode::Trilinear
+                || sampling == SamplingMode::NearestMapped
+            {
+                MipmapFilterMode::Linear
+            } else {
+                MipmapFilterMode::Nearest
+            },
             ..Default::default()
         });
 
-        return Self { 
-            texture, 
-            view, 
-            sampler
+        return Self {
+            texture,
+            view,
+            sampler,
         };
     }
 
@@ -121,7 +147,7 @@ impl TextureS {
             dimension: TextureDimension::D2,
             format: TextureFormat::Rgba8UnormSrgb,
             usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
-            view_formats: &[]
+            view_formats: &[],
         });
 
         holding.queue.write_texture(
@@ -129,13 +155,13 @@ impl TextureS {
                 texture: &texture,
                 mip_level: 0,
                 origin: Origin3d::ZERO,
-                aspect: TextureAspect::All
+                aspect: TextureAspect::All,
             },
             &data,
             TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4),
-                rows_per_image: Some(1)
+                rows_per_image: Some(1),
             },
             size,
         );
@@ -151,13 +177,13 @@ impl TextureS {
             ..Default::default()
         });
 
-        return Self { 
-            texture, 
-            view, 
-            sampler
+        return Self {
+            texture,
+            view,
+            sampler,
         };
     }
-    
+
     pub fn get_texture_binding(&self, visibility: ShaderStages) -> BindingS<'_> {
         BindingS {
             entry_layout: BindGroupLayoutEntry {
@@ -166,13 +192,13 @@ impl TextureS {
                 ty: BindingType::Texture {
                     sample_type: TextureSampleType::Float { filterable: true },
                     view_dimension: TextureViewDimension::D2,
-                    multisampled: false
+                    multisampled: false,
                 },
-                count: None
+                count: None,
             },
             entry: BindGroupEntry {
                 binding: 0,
-                resource: BindingResource::TextureView(&self.view)
+                resource: BindingResource::TextureView(&self.view),
             },
         }
     }
@@ -183,11 +209,11 @@ impl TextureS {
                 binding: 0,
                 visibility,
                 ty: BindingType::Sampler(SamplerBindingType::Filtering),
-                count: None
+                count: None,
             },
             entry: BindGroupEntry {
                 binding: 0,
-                resource: BindingResource::Sampler(&self.sampler)
+                resource: BindingResource::Sampler(&self.sampler),
             },
         }
     }

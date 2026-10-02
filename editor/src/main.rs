@@ -1,4 +1,7 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use bevy_ecs::prelude::*;
 use glam::*;
@@ -8,18 +11,52 @@ use smq_engine::*;
 
 use wgpu::*;
 
+use std::env;
+
 mod gen_bake;
 
-mod editor;
 mod bake;
+mod editor;
 
 use winit::event_loop::EventLoop;
 
-use crate::{editor::{EditorState, editor_set_viewport_texture_id, editor_update, save_layout}, gen_bake::GenAssets};
+use crate::{
+    editor::{EditorState, editor_set_viewport_texture_id, editor_update, save_layout},
+    gen_bake::GenAssets,
+};
 
-fn main() {    
+fn main() {
     logger::init();
-    
+
+    let args: Vec<String> = env::args().collect();
+
+    let target_dir: PathBuf = if args.len() > 1 {
+        let dropped_path = PathBuf::from(&args[1]);
+
+        if dropped_path.is_dir() {
+            dropped_path
+        } else {
+            dropped_path
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| PathBuf::from("."))
+        }
+    } else {
+        log::info!("no project selected yet");
+        
+        match rfd::FileDialog::new().set_title("select project").pick_folder() {
+            Some(path) => path,
+            None => {
+                log::error!("no project selected");
+                return;
+            }
+        }
+    };
+
+    env::set_current_dir(&target_dir).unwrap();
+
+    println!("project folder: {:?}", env::current_dir().unwrap());
+
     let mut world = World::new();
     world.insert_resource(Delta::new());
     world.insert_resource(Inputs::default());
@@ -27,27 +64,31 @@ fn main() {
     let mut schedule = Schedule::default();
     schedule.add_systems(free_camera_system);
 
-    world.spawn(
-        FreeCamera {
-            position: Vec3::ZERO,
-            pitch: 0.0,
-            yaw: 0.0,
-            speed: 5.0,
-            sensitivity: 0.3,
-            is_controlling: false
-        }
-    );
+    world.spawn(FreeCamera {
+        position: Vec3::ZERO,
+        pitch: 0.0,
+        yaw: 0.0,
+        speed: 5.0,
+        sensitivity: 0.3,
+        is_controlling: false,
+    });
 
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
-    let mut context: Context<'_, Renderer> = Context::new(world, schedule, event_loop.create_proxy(), ContextSettings { 
-        present_mode: PresentMode::AutoVsync 
-    }, ContextEvents { 
-        renderer: Some(render), 
-        on_wgpu_load: Some(load_assets), 
-        pre_schedule: Some(pre_schedule),
-        on_exit: Some(on_exit)
-    });
+    let mut context: Context<'_, Renderer> = Context::new(
+        world,
+        schedule,
+        event_loop.create_proxy(),
+        ContextSettings {
+            present_mode: PresentMode::AutoVsync,
+        },
+        ContextEvents {
+            renderer: Some(render),
+            on_wgpu_load: Some(load_assets),
+            pre_schedule: Some(pre_schedule),
+            on_exit: Some(on_exit),
+        },
+    );
 
     event_loop.run_app(&mut context).unwrap();
 }
@@ -61,13 +102,18 @@ struct Renderer {
     // bind_group2: BindGroupS,
     // mesh1: Mesh,
     bind_group_blit: BindGroupS,
-    blit_pipeline: BlitInfo
+    blit_pipeline: BlitInfo,
 }
 
 #[allow(unused)]
 fn on_exit(context: &mut Context<Renderer>) {
     save_layout(context.world.get_resource::<EditorState>().unwrap());
-    context.world.get_resource::<EditorState>().unwrap().settings.save();
+    context
+        .world
+        .get_resource::<EditorState>()
+        .unwrap()
+        .settings
+        .save();
 }
 
 #[allow(unused)]
@@ -89,13 +135,13 @@ fn load_assets(context: &mut Context<Renderer>) {
 
     // let bind_group2 = BindGroupS::new(context, &[
     //     gen_assets.renderer_ubodata2_ubo.get_binding(ShaderStages::VERTEX),
-        
+
     // ], None);
 
     // let holding = context.holding.as_mut().unwrap();
 
-    // let mat1layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor { 
-    //     label: None, 
+    // let mat1layout = holding.device.create_pipeline_layout(&PipelineLayoutDescriptor {
+    //     label: None,
     //     bind_group_layouts: &[
     //         Some(&bind_group0.bind_group_layout),
     //         Some(&bind_group1.bind_group_layout),
@@ -105,12 +151,12 @@ fn load_assets(context: &mut Context<Renderer>) {
     //     immediate_size: 0
     // });
 
-    // let mat1module = holding.device.create_shader_module(ShaderModuleDescriptor { 
-    //     label: None, 
+    // let mat1module = holding.device.create_shader_module(ShaderModuleDescriptor {
+    //     label: None,
     //     source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("../../smq_proj/data/file/renderer/shaders/base.wgsl")))
     // });
 
-    // let mat1 = holding.device.create_render_pipeline(&RenderPipelineDescriptor { 
+    // let mat1 = holding.device.create_render_pipeline(&RenderPipelineDescriptor {
     //     label: None,
     //     layout: Some(&mat1layout),
     //     vertex: VertexState {
@@ -118,21 +164,21 @@ fn load_assets(context: &mut Context<Renderer>) {
     //         entry_point: Some("vs_main"),
     //         compilation_options: PipelineCompilationOptions::default(),
     //         buffers: &[
-    //             Some(VertexBufferLayout { 
-    //                 array_stride: 32, 
-    //                 step_mode: VertexStepMode::Vertex, 
+    //             Some(VertexBufferLayout {
+    //                 array_stride: 32,
+    //                 step_mode: VertexStepMode::Vertex,
     //                 attributes: &[
-    //                     VertexAttribute { 
+    //                     VertexAttribute {
     //                         format: VertexFormat::Float32x3,
     //                         offset: 0,
     //                         shader_location: 0
     //                     },
-    //                     VertexAttribute { 
+    //                     VertexAttribute {
     //                         format: VertexFormat::Float32x2,
     //                         offset: 12,
     //                         shader_location: 1
     //                     },
-    //                     VertexAttribute { 
+    //                     VertexAttribute {
     //                         format: VertexFormat::Float32x3,
     //                         offset: 20,
     //                         shader_location: 2
@@ -140,8 +186,8 @@ fn load_assets(context: &mut Context<Renderer>) {
     //                 ]
     //             })
     //         ]
-    //     }, 
-    //     primitive: PrimitiveState { 
+    //     },
+    //     primitive: PrimitiveState {
     //         topology: PrimitiveTopology::TriangleList,
     //         strip_index_format: None,
     //         front_face: FrontFace::Ccw,
@@ -149,51 +195,59 @@ fn load_assets(context: &mut Context<Renderer>) {
     //         unclipped_depth: false,
     //         polygon_mode: PolygonMode::Fill,
     //         conservative: false
-    //     }, 
-    //     depth_stencil: Some(DepthStencilState { 
+    //     },
+    //     depth_stencil: Some(DepthStencilState {
     //         format: TextureFormat::Depth32Float,
     //         depth_write_enabled: Some(true),
     //         depth_compare: Some(CompareFunction::Less),
     //         stencil: StencilState::default(),
     //         bias: DepthBiasState::default()
-    //     }), 
-    //     multisample: MultisampleState { 
-    //         count: 1, 
-    //         mask: !0, 
-    //         alpha_to_coverage_enabled: false 
-    //     }, 
-    //     fragment: Some(FragmentState { 
+    //     }),
+    //     multisample: MultisampleState {
+    //         count: 1,
+    //         mask: !0,
+    //         alpha_to_coverage_enabled: false
+    //     },
+    //     fragment: Some(FragmentState {
     //         module: &mat1module,
     //         entry_point: Some("fs_main"),
     //         compilation_options: PipelineCompilationOptions::default(),
     //         targets: &[Some(ColorTargetState { format: TextureFormat::Rgba8Unorm, blend: None, write_mask: ColorWrites::ALL })]
-    //     }), 
-    //     multiview_mask: None, 
+    //     }),
+    //     multiview_mask: None,
     //     cache: None
     // });
 
-    // let mesh1 = Mesh::new(context, 
+    // let mesh1 = Mesh::new(context,
     //     include_bytes!("../../smq_proj/data/file/mesh/Cube.smf"), 32, None).unwrap();
 
-    let bind_group_blit = BindGroupS::new(context, &[
-        gen_assets.renderer_main_renderTexture.attachments[0].get_texture_binding(ShaderStages::FRAGMENT, true),
-        gen_assets.renderer_main_renderTexture.attachments[0].get_sampler_binding(ShaderStages::FRAGMENT)
-    ], None);
+    let bind_group_blit = BindGroupS::new(
+        context,
+        &[
+            gen_assets.renderer_main_renderTexture.attachments[0]
+                .get_texture_binding(ShaderStages::FRAGMENT, true),
+            gen_assets.renderer_main_renderTexture.attachments[0]
+                .get_sampler_binding(ShaderStages::FRAGMENT),
+        ],
+        None,
+    );
 
-    let blit_pipeline = context.create_blit_pipeline(&bind_group_blit); 
-    
-    let texture_id = gen_assets.renderer_main_renderTexture.create_egui_texture_id(context, 0, FilterMode::Linear);
+    let blit_pipeline = context.create_blit_pipeline(&bind_group_blit);
+
+    let texture_id = gen_assets
+        .renderer_main_renderTexture
+        .create_egui_texture_id(context, 0, FilterMode::Linear);
     editor_set_viewport_texture_id(&mut context.world, texture_id);
 
-    context.data = Some(Renderer { 
-        gen_assets, 
-        // mat1: RenderMaterial { pipeline: mat1 }, 
-        // bind_group0, 
-        // bind_group1, 
-        // bind_group2, 
-        // mesh1, 
-        bind_group_blit, 
-        blit_pipeline 
+    context.data = Some(Renderer {
+        gen_assets,
+        // mat1: RenderMaterial { pipeline: mat1 },
+        // bind_group0,
+        // bind_group1,
+        // bind_group2,
+        // mesh1,
+        bind_group_blit,
+        blit_pipeline,
     });
 }
 
@@ -242,74 +296,7 @@ fn render(context: &mut Context<Renderer>, full_output: ::egui::FullOutput) {
         context.draw_egui(&mut frame, full_output);
 
         context.end_frame(frame);
-    }   
-
-    // context.data = Some(data);
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CommonFileDescriptor {
-    pub file_path: String,
-    pub json_path: String
-}
-
-pub fn process_common_file_descriptor(path: &Path) -> (PathBuf, PathBuf) {
-    let is_valid_json = match fs::read_to_string(path) {
-        Ok(contents) => serde_json::from_str::<CommonFileDescriptor>(&contents).is_ok(),
-        Err(_) => false
-    };
-
-    let path_str = path.display().to_string().replace('\\', "/");
-    
-    let rest = if let Some(idx) = path_str.find("smq_proj/assets/") {
-        &path_str[idx + "smq_proj/assets/".len()..]
-    } else {
-        panic!("error: filepath doesn't start with smq_proj/assets/': {:?}", path);
-    };
-
-    let new_file_path = PathBuf::from("smq_proj/data/file").join(rest);
-    let new_json_path = PathBuf::from("smq_proj/data/json").join(rest);
-
-    if !is_valid_json {
-        if path.exists() {
-            if let Some(parent) = new_file_path.parent() {
-                let _ = fs::create_dir_all(parent);
-            }
-            if let Err(_) = fs::rename(path, &new_file_path) {
-                if fs::copy(path, &new_file_path).is_ok() {
-                    let _ = fs::remove_file(path);
-                }
-            }
-        }
-    } else {
-        if let Ok(contents) = fs::read_to_string(path) {
-            if let Ok(descriptor) = serde_json::from_str::<CommonFileDescriptor>(&contents) {
-                let new_file_path_str = new_file_path.display().to_string();
-                if descriptor.file_path != new_file_path_str && Path::new(&descriptor.file_path).exists() {
-                    if let Some(parent) = new_file_path.parent() {
-                        let _ = fs::create_dir_all(parent);
-                    }
-                    let _ = fs::rename(&descriptor.file_path, &new_file_path);
-                }
-
-                let new_json_path_str = new_json_path.display().to_string();
-                if descriptor.json_path != new_json_path_str && Path::new(&descriptor.json_path).exists() {
-                    if let Some(parent) = new_json_path.parent() {
-                        let _ = fs::create_dir_all(parent);
-                    }
-                    let _ = fs::rename(&descriptor.json_path, &new_json_path);
-                }
-            }
-        }
     }
 
-    let updated_descriptor = CommonFileDescriptor { 
-        file_path: new_file_path.display().to_string(), 
-        json_path: new_json_path.display().to_string()
-    };
-
-    let json_string = serde_json::to_string_pretty(&updated_descriptor).unwrap();
-    fs::write(path, json_string).expect("failed to save common file descriptor file");
-
-    return (new_file_path, new_json_path);
+    // context.data = Some(data);
 }

@@ -1,13 +1,13 @@
-use glam::*;
 use bevy_ecs::prelude::*;
-use std::{collections::HashSet};
-use winit::{event::KeyEvent, keyboard::{KeyCode}};
+use glam::*;
+use std::collections::HashSet;
 use web_time::Instant;
+use winit::{event::KeyEvent, keyboard::KeyCode};
 
 #[derive(Resource)]
 pub struct Delta {
     pub delta: f32,
-    pub last_render_time: Instant
+    pub last_render_time: Instant,
 }
 
 impl Delta {
@@ -16,8 +16,8 @@ impl Delta {
 
         return Self {
             delta: 0.0,
-            last_render_time
-        };        
+            last_render_time,
+        };
     }
 
     pub fn update_delta(&mut self) {
@@ -33,7 +33,7 @@ pub struct Inputs {
     keys_pressed: HashSet<KeyCode>,
     keys_released: HashSet<KeyCode>,
 
-    pub mouse_delta: (f32, f32)
+    pub mouse_delta: (f32, f32),
 }
 
 impl Inputs {

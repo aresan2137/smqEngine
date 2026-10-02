@@ -1,21 +1,26 @@
-use std::{path::{Path, PathBuf}, process::Command};
-
-use crate::process_common_file_descriptor;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 // if doesn't work check if blender is in the Path enviroment varible and restart vscode/console
 
 pub fn draw(path: &PathBuf, ui: &mut egui::Ui) {
-    let (file_path, _) = process_common_file_descriptor(path);
     ui.heading("Blender Model");
     ui.separator();
 
-    let file_name = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("Unknown");
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("Unknown");
     ui.label(format!("file: {}", file_name));
 
     ui.separator();
 
     if ui.button("Bake").clicked() {
-        let relative_path = file_path.strip_prefix("smq_proj/assets/").unwrap_or(&file_path);
+        let relative_path = path
+            .strip_prefix("smq_proj/assets/")
+            .unwrap_or(&path);
         let tmp_gltf_path = std::path::PathBuf::from("smq_proj/tmp_assets/")
             .join(relative_path)
             .with_extension("glb");
@@ -24,8 +29,8 @@ pub fn draw(path: &PathBuf, ui: &mut egui::Ui) {
             let _ = std::fs::create_dir_all(parent);
         }
 
-        if call_blender_export(&file_path, &tmp_gltf_path) {
-            let final_output_dir = file_path.with_extension(""); 
+        if call_blender_export(&path, &tmp_gltf_path) {
+            let final_output_dir = path.with_extension("");
             compile_gltf_to_smf(&tmp_gltf_path, &final_output_dir);
             log::info!("bake sucess");
         } else {
@@ -36,16 +41,29 @@ pub fn draw(path: &PathBuf, ui: &mut egui::Ui) {
 
 fn call_blender_export(blend_path: &Path, output_gltf_path: &Path) -> bool {
     let python_cmd = format!(
-        "import bpy; bpy.ops.export_scene.gltf(filepath='{}', export_animations=False, export_image_format='NONE', export_materials='NONE')",
+        "import bpy; \
+        [setattr(obj, 'location', (0, 0, 0)) for obj in bpy.context.scene.objects if obj.type == 'MESH']; \
+        bpy.ops.export_scene.gltf(\
+            filepath='{}', \
+            export_animations=False, \
+            export_image_format='NONE', \
+            export_materials='NONE', \
+            export_apply=True\
+        )",
         output_gltf_path.display().to_string().replace("\\", "/")
     );
 
-    let status = Command::new("blender").arg("-b").arg(blend_path).arg("--python-expr").arg(python_cmd).status();
+    let status = Command::new("blender")
+        .arg("-b")
+        .arg(blend_path)
+        .arg("--python-expr")
+        .arg(python_cmd)
+        .status();
 
     match status {
         Ok(s) => s.success(),
         Err(_) => {
-            eprintln!("blender not found");
+            log::error!("blender not found");
             false
         }
     }
@@ -57,7 +75,7 @@ pub fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
     if output_dir.exists() {
         let _ = std::fs::remove_dir_all(output_dir);
     }
-    
+
     let _ = std::fs::create_dir_all(output_dir);
 
     for mesh in document.meshes() {
@@ -72,12 +90,12 @@ pub fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
 
             let positions = reader.read_positions().map(|p| p.collect::<Vec<_>>());
             let normals = reader.read_normals().map(|n| n.collect::<Vec<_>>());
-            let tex_coords = reader.read_tex_coords(0).map(|t| t.into_f32().collect::<Vec<_>>());
+            let tex_coords = reader
+                .read_tex_coords(0)
+                .map(|t| t.into_f32().collect::<Vec<_>>());
 
             if let Some(pos_vec) = positions {
-                let to_y_up = |v: [f32; 3]| -> [f32; 3] {
-                    [v[0], v[1], v[2]]
-                };
+                let to_y_up = |v: [f32; 3]| -> [f32; 3] { [v[0], v[1], v[2]] };
 
                 if let Some(indices_iter) = reader.read_indices() {
                     let indices: Vec<u32> = indices_iter.into_u32().collect();
@@ -127,13 +145,13 @@ pub fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
         }
 
         if vertex_count == 0 {
-            continue; 
+            continue;
         }
 
         let smf_path = output_dir.join(format!("{}.smf", safe_name));
-        
+
         let vertex_bytes: Vec<u8> = vertices.iter().flat_map(|f| f.to_le_bytes()).collect();
-        
+
         if let Err(e) = write_smf_file(&smf_path, vertex_count, &vertex_bytes) {
             log::error!("failed to save smf for {}: {}", safe_name, e);
         } else {
@@ -144,12 +162,12 @@ pub fn compile_gltf_to_smf(gltf_path: &Path, output_dir: &Path) {
 
 pub fn write_smf_file(path: &Path, vertex_count: u32, vertex_data: &[u8]) -> std::io::Result<()> {
     let mut payload = Vec::new();
-    
+
     payload.push(0b10110000);
-    payload.extend_from_slice(&vertex_count.to_le_bytes()); 
-    payload.extend_from_slice(&0u32.to_le_bytes()); 
-    
-    payload.extend_from_slice(vertex_data); 
+    payload.extend_from_slice(&vertex_count.to_le_bytes());
+    payload.extend_from_slice(&0u32.to_le_bytes());
+
+    payload.extend_from_slice(vertex_data);
 
     std::fs::write(path, payload)
 }

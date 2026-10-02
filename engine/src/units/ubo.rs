@@ -1,12 +1,12 @@
-use wgpu::*;
 use bytemuck::Pod;
+use wgpu::*;
 
 use crate::{BindingS, Context};
 
 pub struct DynamicUbo<T> {
     pub data: Vec<T>,
     pub buffer: Buffer,
-    pub size: u64
+    pub size: u64,
 }
 
 impl<T: Pod> DynamicUbo<T> {
@@ -14,29 +14,34 @@ impl<T: Pod> DynamicUbo<T> {
         let size = std::mem::size_of::<T>() as u64;
 
         assert!(
-            size % 256 == 0, 
-            "UBO type must be multiple of 256 its: {}", 
+            size % 256 == 0,
+            "UBO type must be multiple of 256 its: {}",
             size
         );
 
         let buffer_size = size * data.len() as u64;
 
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor { 
-            label: None, 
-            size: buffer_size, 
-            usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM, 
-            mapped_at_creation: false 
-        });
+        let buffer = context
+            .holding
+            .as_ref()
+            .unwrap()
+            .device
+            .create_buffer(&BufferDescriptor {
+                label: None,
+                size: buffer_size,
+                usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
+                mapped_at_creation: false,
+            });
 
-        return Self { 
-            data,
-            buffer,
-            size
-        };
+        return Self { data, buffer, size };
     }
 
     pub fn upload_data<D>(&self, context: &Context<D>) {
-        context.holding.as_ref().unwrap().queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.data));
+        context.holding.as_ref().unwrap().queue.write_buffer(
+            &self.buffer,
+            0,
+            bytemuck::cast_slice(&self.data),
+        );
     }
 
     pub fn get_binding(&self, visibility: ShaderStages) -> BindingS<'_> {
@@ -47,18 +52,18 @@ impl<T: Pod> DynamicUbo<T> {
                 ty: BindingType::Buffer {
                     ty: BufferBindingType::Uniform,
                     has_dynamic_offset: true,
-                    min_binding_size: None
+                    min_binding_size: None,
                 },
-                count: None
-            }, 
+                count: None,
+            },
             entry: BindGroupEntry {
                 binding: 0,
                 resource: BindingResource::Buffer(BufferBinding {
                     buffer: &self.buffer,
                     offset: 0,
-                    size: BufferSize::new(self.size.clone())
-                })
-            } 
+                    size: BufferSize::new(self.size.clone()),
+                }),
+            },
         };
     }
 }
@@ -66,51 +71,56 @@ impl<T: Pod> DynamicUbo<T> {
 pub struct Ubo<T> {
     pub data: T,
     pub buffer: Buffer,
-    pub size: u64
+    pub size: u64,
 }
 
 impl<T: Pod> Ubo<T> {
     pub fn new<D>(context: &Context<D>, data: T) -> Self {
         let size = std::mem::size_of::<T>() as u64;
 
-        let buffer = context.holding.as_ref().unwrap().device.create_buffer(&BufferDescriptor { 
-            label: None, 
-            size: size, 
-            usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
-            mapped_at_creation: false 
-        });
+        let buffer = context
+            .holding
+            .as_ref()
+            .unwrap()
+            .device
+            .create_buffer(&BufferDescriptor {
+                label: None,
+                size: size,
+                usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
+                mapped_at_creation: false,
+            });
 
-        return Self { 
-            data,
-            buffer,
-            size
-        };
+        return Self { data, buffer, size };
     }
 
     pub fn upload_data<D>(&self, context: &Context<D>) {
-        context.holding.as_ref().unwrap().queue.write_buffer(&self.buffer, 0, bytemuck::bytes_of(&self.data));
+        context.holding.as_ref().unwrap().queue.write_buffer(
+            &self.buffer,
+            0,
+            bytemuck::bytes_of(&self.data),
+        );
     }
 
     pub fn get_binding(&self, visibility: ShaderStages) -> BindingS<'_> {
-        return BindingS { 
+        return BindingS {
             entry_layout: BindGroupLayoutEntry {
                 binding: 0,
                 visibility: visibility,
                 ty: BindingType::Buffer {
                     ty: BufferBindingType::Uniform,
                     has_dynamic_offset: false,
-                    min_binding_size: None
+                    min_binding_size: None,
                 },
-                count: None
-            }, 
+                count: None,
+            },
             entry: BindGroupEntry {
                 binding: 0,
                 resource: BindingResource::Buffer(BufferBinding {
                     buffer: &self.buffer,
                     offset: 0,
-                    size: BufferSize::new(self.size.clone())
-                })
-            }
+                    size: BufferSize::new(self.size.clone()),
+                }),
+            },
         };
     }
 }

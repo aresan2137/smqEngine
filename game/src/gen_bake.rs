@@ -10,11 +10,17 @@ use wgpu::*;
 #[repr(usize)]
 #[derive(Clone, Copy)]
 pub enum Meshes {
-    file_mesh_Cart_smf = 0,
-    file_mesh_Cube_smf = 1,
-    file_mesh_Floor_smf = 2,
-    file_mesh_Walls_smf = 3,
-    file_mesh_Walls_001_smf = 4,
+    mesh_Cart_smf = 0,
+    mesh_Cube_smf = 1,
+    mesh_Floor_smf = 2,
+    mesh_Walls_smf = 3,
+    mesh_Walls_001_smf = 4,
+}
+
+#[repr(usize)]
+#[derive(Clone, Copy)]
+pub enum Textures {
+    rock_png = 0,
 }
 
 #[repr(C)]
@@ -108,53 +114,38 @@ pub struct GenAssets {
     pub ubodata0: Ubo<UboData0>,
     pub ubodata1: Ubo<UboData1>,
     pub dubodata2: DynamicUbo<DUboData2>,
-    pub lakaka_png: TextureS,
     pub renderer_main_renderTexture: RenderTexture,
     pub renderer_post_renderTexture: RenderTexture,
     pub blitinfo: BlitInfo,
     pub blit_group: BindGroupS,
     pub meshes: [Mesh; 5],
+    pub textures: [TextureS; 1],
 }
 
 impl GenAssets {
     pub fn init_gen_assets<D>(context: &Context<D>, ssf_data: &[SSFAsset]) -> Self {
         let meshes = [
-            Mesh::new(
-                context,
-                ssf_data[1].as_ref(),
-                32,
-                Some("file_mesh_Cart_smf"),
-            )
-            .unwrap(),
-            Mesh::new(
-                context,
-                ssf_data[2].as_ref(),
-                32,
-                Some("file_mesh_Cube_smf"),
-            )
-            .unwrap(),
-            Mesh::new(
-                context,
-                ssf_data[3].as_ref(),
-                32,
-                Some("file_mesh_Floor_smf"),
-            )
-            .unwrap(),
+            Mesh::new(context, ssf_data[0].as_ref(), 32, Some("mesh_Cart_smf")).unwrap(),
+            Mesh::new(context, ssf_data[1].as_ref(), 32, Some("mesh_Cube_smf")).unwrap(),
+            Mesh::new(context, ssf_data[2].as_ref(), 32, Some("mesh_Floor_smf")).unwrap(),
+            Mesh::new(context, ssf_data[3].as_ref(), 32, Some("mesh_Walls_smf")).unwrap(),
             Mesh::new(
                 context,
                 ssf_data[4].as_ref(),
                 32,
-                Some("file_mesh_Walls_smf"),
-            )
-            .unwrap(),
-            Mesh::new(
-                context,
-                ssf_data[5].as_ref(),
-                32,
-                Some("file_mesh_Walls_001_smf"),
+                Some("mesh_Walls_001_smf"),
             )
             .unwrap(),
         ];
+        let textures = [TextureS::new(
+            context,
+            ssf_data[5].as_ref(),
+            smq_engine::SamplingMode::Nearest,
+            1,
+            TextureFormat::Rgba8UnormSrgb,
+            AddressMode::Repeat,
+            Some("rock_png"),
+        )];
 
         let mut ubodefferedinfo = Ubo::new(context, UboDefferedInfo::default());
         let mut ubodata0 = Ubo::new(context, UboData0::default());
@@ -164,15 +155,6 @@ impl GenAssets {
             std::iter::repeat_with(DUboData2::default)
                 .take(1024)
                 .collect(),
-        );
-        let lakaka_png = TextureS::new(
-            context,
-            ssf_data[0].as_ref(),
-            smq_engine::SamplingMode::NearestMapped,
-            4,
-            TextureFormat::Rgba8UnormSrgb,
-            AddressMode::Repeat,
-            Some("lakaka_png"),
         );
         let renderer_main_renderTexture = RenderTexture::new(
             context,
@@ -194,7 +176,7 @@ impl GenAssets {
                     Some("renderer_main_renderTexture_1"),
                 ),
                 (
-                    TextureFormat::Rgba16Float,
+                    TextureFormat::Rg16Float,
                     TextureUsages::RENDER_ATTACHMENT
                         | TextureUsages::TEXTURE_BINDING
                         | TextureUsages::empty(),
@@ -239,12 +221,12 @@ impl GenAssets {
             ubodata0,
             ubodata1,
             dubodata2,
-            lakaka_png,
             renderer_main_renderTexture,
             renderer_post_renderTexture,
             blitinfo,
             blit_group,
             meshes,
+            textures,
         };
     }
 }

@@ -4,3 +4,6 @@ add material and binding to bake
 
 #editor
 fix rendertexture resolution problem
+
+#game
+add wall colisions

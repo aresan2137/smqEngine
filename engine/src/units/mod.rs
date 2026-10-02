@@ -15,4 +15,3 @@ pub use texture::*;
 
 mod material;
 pub use material::*;
-

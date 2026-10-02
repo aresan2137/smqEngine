@@ -5,9 +5,12 @@ use winit::keyboard::KeyCode;
 
 use crate::renderer::PointLight;
 
-pub fn player_movment_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query<&mut FreeCamera>) {
+pub fn player_movment_system(
+    time: Res<Delta>,
+    input: Res<Inputs>,
+    mut query: Query<&mut FreeCamera>,
+) {
     if let Some(mut player) = query.iter_mut().next() {
-        
         if input.pressed(KeyCode::KeyZ) {
             player.is_controlling = !player.is_controlling;
         }
@@ -16,7 +19,7 @@ pub fn player_movment_system(time: Res<Delta>, input: Res<Inputs>, mut query: Qu
         }
 
         if !player.is_controlling {
-            return; 
+            return;
         }
 
         player.yaw -= input.mouse_delta.0 * player.sensitivity;
@@ -31,10 +34,18 @@ pub fn player_movment_system(time: Res<Delta>, input: Res<Inputs>, mut query: Qu
 
         let velocity = player.speed * time.delta;
 
-        if input.down(KeyCode::KeyW) { player.position += forward * velocity; }
-        if input.down(KeyCode::KeyS) { player.position -= forward * velocity; }
-        if input.down(KeyCode::KeyD) { player.position += right * velocity; }
-        if input.down(KeyCode::KeyA) { player.position -= right * velocity; }
+        if input.down(KeyCode::KeyW) {
+            player.position += forward * velocity;
+        }
+        if input.down(KeyCode::KeyS) {
+            player.position -= forward * velocity;
+        }
+        if input.down(KeyCode::KeyD) {
+            player.position += right * velocity;
+        }
+        if input.down(KeyCode::KeyA) {
+            player.position -= right * velocity;
+        }
     }
 }
 
