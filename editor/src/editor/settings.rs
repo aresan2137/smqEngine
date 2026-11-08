@@ -8,6 +8,7 @@ pub struct BakeSettings {
     pub generate_blit_code: bool,
     pub render_texture_path: Option<String>,
     pub render_texture_attachment: String,
+    pub bake_bvh: bool
 }
 
 impl Default for BakeSettings {
@@ -16,6 +17,7 @@ impl Default for BakeSettings {
             generate_blit_code: true,
             render_texture_path: None,
             render_texture_attachment: "0".to_string(),
+            bake_bvh: false
         };
     }
 }
@@ -130,6 +132,12 @@ impl Settings {
                                     }
                                 }
                             });
+
+                            ui.checkbox(
+                                &mut self.bake_settings.bake_bvh,
+                                "bake bvh",
+                            );
+
                         }
                         "t2sub1" => {
                             ui.heading("t2sub1");

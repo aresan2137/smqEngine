@@ -43,15 +43,90 @@ pub fn get_default_vert_layout() -> Option<VertexBufferLayout<'static>> {
 }
 
 impl RenderMaterial {
+
+    pub fn new_surface<D>(
+        context: &mut Context<D>,
+        culling: Option<Face>,
+        label: Option<&str>,
+        surface_format: TextureFormat,
+        depth_format: Option<TextureFormat>,
+        blend: Option<BlendState>,
+        module: &ShaderModule,
+        vert_layout: Option<VertexBufferLayout>,
+        depth_compare: Option<CompareFunction>,
+        layout: &PipelineLayout,
+    ) -> Self {
+        let holding = context.holding.as_mut().unwrap();
+
+        let color_target = ColorTargetState {
+            format: surface_format,
+            blend,
+            write_mask: ColorWrites::ALL,
+        };
+
+        let depth_stencil = depth_format.map(|format| DepthStencilState {
+            format,
+            depth_write_enabled: Some(true),
+            depth_compare,
+            stencil: StencilState::default(),
+            bias: DepthBiasState::default(),
+        });
+
+        let pipeline = holding
+            .device
+            .create_render_pipeline(&RenderPipelineDescriptor {
+                label,
+                layout: Some(layout),
+                vertex: VertexState {
+                    module,
+                    entry_point: Some("vs_main"),
+                    compilation_options: PipelineCompilationOptions::default(),
+                    buffers: &[
+                        vert_layout
+                    ]
+                },
+                primitive: PrimitiveState {
+                    topology: PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: FrontFace::Ccw,
+                    cull_mode: culling,
+                    unclipped_depth: false,
+                    polygon_mode: PolygonMode::Fill,
+                    conservative: false,
+                },
+                depth_stencil,
+                multisample: MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                fragment: Some(FragmentState {
+                    module,
+                    entry_point: Some("fs_main"),
+                    compilation_options: PipelineCompilationOptions::default(),
+                    targets: &[Some(color_target)],
+                }),
+                multiview_mask: None,
+                cache: None,
+            });
+
+        return Self { 
+            pipeline 
+        };
+    }
+
     pub fn new<D>(
         context: &mut Context<D>,
         culling: Option<Face>,
         label: Option<&str>,
         render_texture: &RenderTexture,
         module: &ShaderModule,
+        blend: Option<BlendState>,
         vert_layout: Option<VertexBufferLayout>,
         depth_compare: Option<CompareFunction>,
         layout: &PipelineLayout,
+        else_depth: Option<&RenderTexture>,
+        depth_write_enabled: Option<bool>
     ) -> Self {
         let holding = context.holding.as_mut().unwrap();
         let mut attachments = Vec::new();
@@ -59,22 +134,39 @@ impl RenderMaterial {
         for attachment in render_texture.attachments.iter() {
             attachments.push(Some(ColorTargetState {
                 format: attachment.format,
-                blend: None,
+                blend,
                 write_mask: ColorWrites::ALL,
             }));
         }
 
-        let depth_stencil = if let Some(depth_data) = &render_texture.depth_texture {
-            Some(DepthStencilState {
-                format: depth_data.2,
-                depth_write_enabled: Some(true),
-                depth_compare,
-                stencil: StencilState::default(),
-                bias: DepthBiasState::default(),
-            })
+        
+
+        let depth_stencil = if let Some(dd) = &else_depth {
+            if let Some(depth_data) = &dd.depth_texture {
+                Some(DepthStencilState {
+                    format: depth_data.2,
+                    depth_write_enabled,
+                    depth_compare,
+                    stencil: StencilState::default(),
+                    bias: DepthBiasState::default(),
+                })
+            } else {
+                None
+            }
         } else {
-            None
-        };
+            if let Some(depth_data) = &render_texture.depth_texture {
+                Some(DepthStencilState {
+                    format: depth_data.2,
+                    depth_write_enabled: Some(true),
+                    depth_compare,
+                    stencil: StencilState::default(),
+                    bias: DepthBiasState::default(),
+                })
+            } else {
+                None
+            }
+        };   
+        
 
         let pipeline = holding
             .device

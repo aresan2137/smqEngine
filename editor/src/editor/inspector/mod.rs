@@ -11,6 +11,9 @@ pub use blend::*;
 mod png;
 pub use png::*;
 
+mod color;
+pub use color::*;
+
 mod mat;
 pub use mat::*;
 
@@ -53,6 +56,7 @@ impl Inspector {
                 "rendertexture" => rendertexture::draw(path, ui),
                 "blend" => blend::draw(path, ui),
                 "png" => png::draw(path, ui),
+                "color" => color::draw(path, ui),
                 _ => {
                     ui.heading("file");
                     ui.label(format!(

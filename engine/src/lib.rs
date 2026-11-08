@@ -12,4 +12,7 @@ pub mod logger;
 mod ssf;
 pub use ssf::*;
 
+mod fps;
+pub use fps::*;
+
 pub mod other;

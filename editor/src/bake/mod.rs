@@ -28,15 +28,17 @@ pub fn bake(state: &EditorState) -> Result<(), Box<dyn Error>> {
 
     let smf_slices: Vec<&[u8]> = smffs.iter().map(|v| v.as_slice()).collect();
 
-    let bvh_gen = build_mega_geometry(&smf_slices, 32);
+    if state.settings.bake_settings.bake_bvh {
+        let bvh_gen = build_mega_geometry(&smf_slices, 32);
 
-    let bvh_path = PathBuf::from("smq_proj/build/bvh.smf");
-    write_smf_file(&bvh_path, bvh_gen.vertex_count, &bvh_gen.mega_vertex_bytes)?;
-    files.push(bvh_path);
+        let bvh_path = PathBuf::from("smq_proj/build/bvh.smf");
+        write_smf_file(&bvh_path, bvh_gen.vertex_count, &bvh_gen.mega_vertex_bytes)?;
+        files.push(bvh_path);
 
-    let bvh_path_2 = PathBuf::from("smq_proj/build/bvh.bin");
-    save_bvh_data(&bvh_path_2, &bvh_gen.mega_nodes, &bvh_gen.bvh_roots)?;
-    files.push(bvh_path_2);
+        let bvh_path_2 = PathBuf::from("smq_proj/build/bvh.bin");
+        save_bvh_data(&bvh_path_2, &bvh_gen.mega_nodes, &bvh_gen.bvh_roots)?;
+        files.push(bvh_path_2);
+    }
 
     let mut comp: Vec<(PathBuf, String, u8)> = Vec::new();
     comp.reserve(files.len());

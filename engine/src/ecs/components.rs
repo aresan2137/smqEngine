@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 use glam::*;
 use std::collections::HashSet;
 use web_time::Instant;
-use winit::{event::KeyEvent, keyboard::KeyCode};
+use winit::{event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta}, keyboard::KeyCode};
 
 #[derive(Resource)]
 pub struct Delta {
@@ -27,13 +27,38 @@ impl Delta {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct Inputs {
     keys_down: HashSet<KeyCode>,
     keys_pressed: HashSet<KeyCode>,
     keys_released: HashSet<KeyCode>,
 
-    pub mouse_delta: (f32, f32),
+    mouse_down: HashSet<MouseButton>,
+    mouse_pressed: HashSet<MouseButton>,
+    mouse_released: HashSet<MouseButton>,
+
+    pub scroll_delta: Vec2,
+    pub mouse_delta: Vec2,
+    pub mouse_pos: Vec2,
+
+    pub window_size: UVec2
+}
+
+impl Default for Inputs {
+    fn default() -> Self {
+        return Self { 
+            keys_down: HashSet::new(), 
+            keys_pressed: HashSet::new(), 
+            keys_released: HashSet::new(), 
+            mouse_down: HashSet::new(), 
+            mouse_pressed: HashSet::new(), 
+            mouse_released: HashSet::new(), 
+            scroll_delta: Vec2::ZERO, 
+            mouse_delta: Vec2::ZERO, 
+            mouse_pos: Vec2::ZERO,
+            window_size: UVec2::new(1280, 720) 
+        };
+    }
 }
 
 impl Inputs {
@@ -64,9 +89,54 @@ impl Inputs {
         }
     }
 
+    pub fn mouse_down(&self, button: MouseButton) -> bool {
+        self.mouse_down.contains(&button)
+    }
+
+    pub fn mouse_pressed(&self, button: MouseButton) -> bool {
+        self.mouse_pressed.contains(&button)
+    }
+
+    pub fn mouse_released(&self, button: MouseButton) -> bool {
+        self.mouse_released.contains(&button)
+    }
+
+    pub fn on_mouse_input(&mut self, state: ElementState, button: MouseButton) {
+        match state {
+            ElementState::Pressed => {
+                if !self.mouse_down.contains(&button) {
+                    self.mouse_pressed.insert(button);
+                }
+                self.mouse_down.insert(button);
+            }
+            ElementState::Released => {
+                self.mouse_down.remove(&button);
+                self.mouse_released.insert(button);
+            }
+        }
+    }
+
+    pub fn on_mouse_wheel(&mut self, delta: MouseScrollDelta) {
+        match delta {
+            MouseScrollDelta::LineDelta(x, y) => {
+                self.scroll_delta.x += x;
+                self.scroll_delta.y += y;
+            }
+            MouseScrollDelta::PixelDelta(pos) => {
+                self.scroll_delta.x += pos.x as f32;
+                self.scroll_delta.y += pos.y as f32;
+            }
+        }
+    }
+
     pub fn end_frame(&mut self) {
         self.keys_pressed.clear();
         self.keys_released.clear();
-        self.mouse_delta = (0.0, 0.0);
+        
+        self.mouse_pressed.clear();
+        self.mouse_released.clear();
+        
+        self.scroll_delta = Vec2::ZERO;
+        self.mouse_delta = Vec2::ZERO;
     }
 }

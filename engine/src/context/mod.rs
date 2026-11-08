@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use bevy_ecs::prelude::*;
 use egui_wgpu::RendererOptions;
+use glam::*;
 use wgpu::*;
 use winit::event_loop::EventLoopProxy;
 use winit::{
@@ -13,7 +14,7 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{Delta, Inputs, f11_system};
+use crate::*;
 
 mod egui;
 pub use egui::*;
@@ -294,11 +295,28 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
             let response = holding.egui_state.on_window_event(window.as_ref(), &event);
 
             if response.consumed {
-                return;
+                //return;
             }
         }
 
         match event {
+            WindowEvent::CursorMoved { position, .. } => {
+                self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found").mouse_pos = Vec2::new(position.x as f32, position.y as f32);
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found")
+                        .on_mouse_wheel(delta);
+            }
+            WindowEvent::MouseInput { state, button, .. } => {
+                self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found")
+                        .on_mouse_input(state, button);
+            }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(keycode) = event.physical_key {
                     self.world
@@ -323,6 +341,10 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
                 } else {
                     self.is_minimized = false;
                     self.resize(&physical_size);
+                    self.world
+                        .get_resource_mut::<Inputs>()
+                        .expect("input not found")
+                        .window_size = UVec2::new(physical_size.width, physical_size.height);
                 }
             }
             WindowEvent::RedrawRequested => {
@@ -369,8 +391,8 @@ impl<D> ApplicationHandler<ContextUserEvent> for Context<'_, D> {
     ) {
         if let DeviceEvent::MouseMotion { delta } = event {
             let mut input = self.world.resource_mut::<Inputs>();
-            input.mouse_delta.0 += delta.0 as f32;
-            input.mouse_delta.1 += delta.1 as f32;
+            input.mouse_delta.x += delta.0 as f32;
+            input.mouse_delta.y += delta.1 as f32;
         }
     }
 

@@ -6,7 +6,26 @@ pub fn init() {
     {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
 
-        console_log::init_with_level(log::Level::Debug).expect("failed to init logger");
+        let mut target_level = log::Level::Info;
+
+        if let Some(window) = web_sys::window() {
+            if let Ok(search) = window.location().search() {
+                let search_lower = search.to_lowercase();
+                if search_lower.contains("log=trace") {
+                    target_level = log::Level::Trace;
+                } else if search_lower.contains("log=debug") {
+                    target_level = log::Level::Debug;
+                } else if search_lower.contains("log=warn") {
+                    target_level = log::Level::Warn;
+                } else if search_lower.contains("log=error") {
+                    target_level = log::Level::Error;
+                } else if search_lower.contains("log=info") {
+                    target_level = log::Level::Info;
+                }
+            }
+        }
+
+        console_log::init_with_level(target_level).expect("failed to init logger");
     }
 
     #[cfg(not(target_arch = "wasm32"))]

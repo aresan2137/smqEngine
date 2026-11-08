@@ -13,7 +13,7 @@ pub struct FreeCamera {
     pub yaw: f32,
     pub speed: f32,
     pub sensitivity: f32,
-    pub is_controlling: bool,
+    pub is_controlling: bool
 }
 
 pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query<&mut FreeCamera>) {
@@ -29,8 +29,8 @@ pub fn free_camera_system(time: Res<Delta>, input: Res<Inputs>, mut query: Query
             continue;
         }
 
-        cam.yaw -= input.mouse_delta.0 * cam.sensitivity;
-        cam.pitch -= input.mouse_delta.1 * cam.sensitivity;
+        cam.yaw -= input.mouse_delta.x * cam.sensitivity;
+        cam.pitch -= input.mouse_delta.y * cam.sensitivity;
         cam.pitch = cam.pitch.clamp(-89.0, 89.0);
 
         let q_yaw = Quat::from_axis_angle(Vec3::Y, cam.yaw.to_radians());

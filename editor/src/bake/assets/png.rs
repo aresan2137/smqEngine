@@ -1,10 +1,12 @@
 use std::{fs, path::PathBuf};
 
+use smq_engine::TextureS;
+use wgpu::Color;
+
 use crate::{
     bake::assets::converters::{
         adresat_str_to_code, path_to_var, sampler_str_to_code, texture_format_str_to_code,
-    },
-    editor::TextureJson,
+    }, editor::{ColorJson, TextureJson},
 };
 
 use std::error::Error;
@@ -46,6 +48,32 @@ pub fn create_png_bake(
                 png_enum += &format!("{} = {},", var_name, png_files);
 
                 png_files += 1;
+
+                files.push(path.clone());
+            }
+            "color" => {
+                let var_name = path_to_var(&path);
+
+                let json_path = if let Some(file_name) = path.file_name() {
+                    let mut new_name = file_name.to_os_string();
+                    new_name.push(".meta");
+                    path.with_file_name(new_name)
+                } else {
+                    path.clone()
+                };
+
+                let json_content = fs::read_to_string(&json_path)?;
+                let color_json: ColorJson = serde_json::from_str(&json_content)?;
+
+                png_gen += &format!(
+                    "\nTextureS::from_color(context, Color {{ {}, {}, {}, {} }}),",
+                    color_json.color.r().to_string(),
+                    color_json.color.g().to_string(),
+                    color_json.color.b().to_string(),
+                    color_json.color.a().to_string()
+                );
+
+                png_enum += &format!("{} = {},", var_name, png_files);
 
                 files.push(path.clone());
             }

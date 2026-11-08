@@ -25,5 +25,5 @@ env_logger = "0.11.11"
 wasm-bindgen = "0.2"
 console_log = "1.0"
 console_error_panic_hook = "0.1"
-web-sys = { version = "0.3", features = ["Document", "Window", "Element", "HtmlCanvasElement", "Node"] }
+web-sys = { version = "0.3", features = ["Document", "Window", "Element", "HtmlCanvasElement", "Node", "Location"] }
 wasm-bindgen-futures = "0.4"

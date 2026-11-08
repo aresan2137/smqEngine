@@ -13,7 +13,10 @@ fn v(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
 @group(0) @binding(0) var t_color: texture_2d<f32>;
 @group(0) @binding(1) var s_color: sampler;
 @fragment
-fn f(in: VertexOutput) -> @location(0) vec4<f32> { return textureSample(t_color, s_color, in.uv); }";
+fn f(in: VertexOutput) -> @location(0) vec4<f32> { 
+    let color = textureSample(t_color, s_color, in.uv);
+    return vec4<f32>(pow(color.rgb, vec3<f32>(1.0/2.2)), color.a);
+}";
 
 pub struct FrameInfo {
     pub frame: SurfaceTexture,
@@ -70,13 +73,6 @@ impl<D> Context<'_, D> {
 
         self.holding.as_ref().unwrap().queue.present(info.frame);
     }
-
-    // pub fn get_compute_pass<'a>(&self, info: &'a mut FrameInfo) -> ComputePass<'a> {
-    //     return info.encoder.begin_compute_pass(&ComputePassDescriptor {
-    //         label: None,
-    //         timestamp_writes: None
-    //     });
-    // }
 
     pub fn create_blit_pipeline<'a>(&self, bind_group: &BindGroupS) -> BlitInfo {
         let blit_shader =
