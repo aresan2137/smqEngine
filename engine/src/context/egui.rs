@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use egui_wgpu::ScreenDescriptor;
 use wgpu::*;
 
 use crate::{Context, FrameInfo};
@@ -52,6 +53,11 @@ pub fn drop_point(
     });
 }
 
+pub struct EguiDrawData {
+    textures_delta: egui::TexturesDelta,
+    paint_jobs: Vec<egui::ClippedPrimitive>,
+    screen_descriptor: ScreenDescriptor
+}
 impl<D> Context<'_, D> {
     pub fn start_egui_record(&mut self) {
         let raw_input = self
@@ -76,7 +82,40 @@ impl<D> Context<'_, D> {
         return full_output;
     }
 
-    pub fn draw_egui<'a>(&mut self, info: &'a mut FrameInfo, mut full_output: egui::FullOutput) {
+    pub fn draw_egui_with_own_pass(&mut self, info: &mut FrameInfo, full_output: egui::FullOutput) {
+        let data = self.draw_egui_prepare(info, full_output);
+        {
+            let mut ui_pass = info
+                .encoder
+                .begin_render_pass(&RenderPassDescriptor {
+                    label: None,
+                    color_attachments: &[Some(RenderPassColorAttachment {
+                        view: &info.view,
+                        resolve_target: None,
+                        depth_slice: None,
+                        ops: Operations {
+                            load: LoadOp::Load,
+                            store: StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                })
+                .forget_lifetime();
+
+            self.draw_egui_in_pass(&data, &mut ui_pass);
+        }
+
+        self.draw_egui_post_pass(data);
+    }
+
+    pub fn draw_egui_prepare(
+        &mut self,
+        info: &mut FrameInfo,
+        full_output: egui::FullOutput
+    ) -> EguiDrawData {
         let holding = self.holding.as_mut().unwrap();
         let paint_jobs = ui().tessellate(full_output.shapes, 1.0);
 
@@ -101,36 +140,25 @@ impl<D> Context<'_, D> {
             &screen_descriptor,
         );
 
-        {
-            let mut ui_pass = info
-                .encoder
-                .begin_render_pass(&RenderPassDescriptor {
-                    label: None,
-                    color_attachments: &[Some(RenderPassColorAttachment {
-                        view: &info.view,
-                        resolve_target: None,
-                        depth_slice: None,
-                        ops: Operations {
-                            load: LoadOp::Load,
-                            store: StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    timestamp_writes: None,
-                    occlusion_query_set: None,
-                    multiview_mask: None,
-                })
-                .forget_lifetime();
+        return EguiDrawData {
+            textures_delta: full_output.textures_delta,
+            paint_jobs,
+            screen_descriptor,
+        };
+    }
 
-            holding
-                .egui_renderer
-                .render(&mut ui_pass, &paint_jobs[..], &screen_descriptor);
-        }
+    pub fn draw_egui_in_pass(&self, data: &EguiDrawData, pass: &mut RenderPass<'static>) {
+        let holding = self.holding.as_ref().unwrap();
+        holding
+            .egui_renderer
+            .render(pass, &data.paint_jobs[..], &data.screen_descriptor);
+    }
 
-        for id in &full_output.textures_delta.free {
+    pub fn draw_egui_post_pass(&mut self, mut data: EguiDrawData) {
+        let holding = self.holding.as_mut().unwrap();
+        for id in &data.textures_delta.free {
             holding.egui_renderer.free_texture(id);
         }
-
-        full_output.textures_delta.clear();
+        data.textures_delta.clear();
     }
 }

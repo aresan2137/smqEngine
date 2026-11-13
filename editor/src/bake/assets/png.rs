@@ -66,16 +66,16 @@ pub fn create_png_bake(
                 let color_json: ColorJson = serde_json::from_str(&json_content)?;
 
                 png_gen += &format!(
-                    "\nTextureS::from_color(context, Color {{ {}, {}, {}, {} }}),",
-                    color_json.color.r().to_string(),
-                    color_json.color.g().to_string(),
-                    color_json.color.b().to_string(),
-                    color_json.color.a().to_string()
+                    "\nTextureS::from_color(context, Color {{ r: {:.8}, g: {:.8}, b: {:.8}, a: {:.8} }}),",
+                    color_json.color.r(),
+                    color_json.color.g(),
+                    color_json.color.b(),
+                    color_json.color.a()
                 );
 
                 png_enum += &format!("{} = {},", var_name, png_files);
 
-                files.push(path.clone());
+                png_files += 1;
             }
             _ => {}
         }

@@ -90,6 +90,39 @@ impl<D> Context<'_, D> {
         }
     }
 
+    pub fn get_surface_render_pass<'a>(&'a self, info: &'a mut FrameInfo) -> RenderPass<'a> {
+    let holding = self.holding.as_ref().unwrap();
+
+    let depth_stencil_attachment = holding
+        .surface_depth_view
+        .as_ref()
+        .map(|view| RenderPassDepthStencilAttachment {
+            view,
+            depth_ops: Some(Operations {
+                load: LoadOp::Clear(1.0),
+                store: StoreOp::Discard
+            }),
+            stencil_ops: None,
+        });
+
+    info.encoder.begin_render_pass(&RenderPassDescriptor {
+        label: None,
+        color_attachments: &[Some(RenderPassColorAttachment {
+            view: &info.view,
+            resolve_target: None,
+            depth_slice: None,
+            ops: Operations {
+                load: LoadOp::Clear(Color::BLACK),
+                store: StoreOp::Store,
+            },
+        })],
+        depth_stencil_attachment,
+        timestamp_writes: None,
+        occlusion_query_set: None,
+        multiview_mask: None,
+    })
+}
+
     pub fn get_compute_pass<'a>(&self, info: &'a mut FrameInfo) -> ComputePass<'a> {
         return info.encoder.begin_compute_pass(&ComputePassDescriptor {
             label: None,

@@ -1,5 +1,5 @@
 use walkdir::WalkDir;
-use wgpu::naga::valid::{Capabilities, ValidationFlags, Validator};
+use wgpu::{FilterMode, naga::valid::{Capabilities, ValidationFlags, Validator}};
 
 use std::{error::Error, fs, path::PathBuf, process::Command};
 
@@ -164,12 +164,13 @@ pub fn bake_assets(state: &EditorState) -> Result<Vec<PathBuf>, Box<dyn Error>> 
                 };
 
                 fn_code += &format!(
-                    "\nlet {} = RenderTexture::new(context, {}, {}, &[{}], {});",
+                    "\nlet {} = RenderTexture::new(context, {}, {}, &[{}], {}, {});",
                     var_name,
                     render_texture_json.width,
                     render_texture_json.height,
                     attachments_data,
-                    depth_data
+                    depth_data,
+                    if render_texture_json.filter_mode { "FilterMode::Linear" } else { "FilterMode::Nearest" }
                 );
 
                 ret_code += &format!("\n{var_name},");

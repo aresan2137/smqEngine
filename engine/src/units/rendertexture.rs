@@ -23,6 +23,7 @@ impl RenderTexture {
         height: u32,
         attachments_data: &[(TextureFormat, TextureUsages, Option<&str>)],
         depth_data: Option<(TextureFormat, TextureUsages, Option<&str>)>,
+        sampler_filter: FilterMode
     ) -> Self {
         let size = Extent3d {
             width,
@@ -66,8 +67,8 @@ impl RenderTexture {
                         address_mode_u: AddressMode::ClampToEdge,
                         address_mode_v: AddressMode::ClampToEdge,
                         address_mode_w: AddressMode::ClampToEdge,
-                        mag_filter: FilterMode::Nearest,
-                        min_filter: FilterMode::Nearest,
+                        mag_filter: sampler_filter,
+                        min_filter: sampler_filter,
                         mipmap_filter: MipmapFilterMode::Nearest,
                         ..Default::default()
                     });

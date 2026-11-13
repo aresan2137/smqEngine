@@ -49,12 +49,14 @@ pub struct ContextEvents<D> {
 #[derive(Clone)]
 pub struct ContextSettings {
     pub present_mode: PresentMode,
+    pub surface_depth: Option<TextureFormat>
 }
 
 impl Default for ContextSettings {
     fn default() -> Self {
         return Self {
             present_mode: PresentMode::AutoVsync,
+            surface_depth: None
         };
     }
 }
@@ -84,15 +86,31 @@ impl<D> Context<'_, D> {
     pub fn resize(&mut self, new_size: &PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             if let Some(holding) = self.holding.as_mut() {
-                if holding.surface_config.width != new_size.width
-                    || holding.surface_config.height != new_size.height
-                {
+                if holding.surface_config.width != new_size.width || holding.surface_config.height != new_size.height {
                     holding.surface_config.width = new_size.width;
                     holding.surface_config.height = new_size.height;
                     self.surface
                         .as_ref()
                         .unwrap()
                         .configure(&holding.device, &holding.surface_config);
+
+                    if let Some(depth_format) = holding.surface_depth_format {
+                        let depth_texture = holding.device.create_texture(&TextureDescriptor {
+                            label: None,
+                            size: Extent3d {
+                                width: new_size.width,
+                                height: new_size.height,
+                                depth_or_array_layers: 1,
+                            },
+                            mip_level_count: 1,
+                            sample_count: 1,
+                            dimension: TextureDimension::D2,
+                            format: depth_format,
+                            usage: TextureUsages::RENDER_ATTACHMENT,
+                            view_formats: &[]
+                        });
+                        holding.surface_depth_view = Some(depth_texture.create_view(&TextureViewDescriptor::default()));
+                    }
                 }
             }
         }
@@ -106,6 +124,8 @@ pub struct ContextWgpuHolding {
     pub egui_state: egui_winit::State,
     pub surface_config: wgt::SurfaceConfiguration<Vec<TextureFormat>>,
     pub surface_format: TextureFormat,
+    pub surface_depth_format: Option<TextureFormat>,
+    pub surface_depth_view: Option<TextureView>
 }
 
 impl ContextWgpuHolding {
@@ -144,6 +164,26 @@ impl ContextWgpuHolding {
 
         let size = window.inner_size();
 
+        let depth_view = if let Some(depth_format) = settings.surface_depth {
+            let depth_texture = device.create_texture(&TextureDescriptor {
+                label: None,
+                size: Extent3d {
+                    width: size.width.max(1),
+                    height: size.height.max(1),
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: TextureDimension::D2,
+                format: depth_format,
+                usage: TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[]
+            });
+            Some(depth_texture.create_view(&TextureViewDescriptor::default()))
+        } else {
+            None
+        };
+
         let surface_config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -163,7 +203,7 @@ impl ContextWgpuHolding {
             surface_format,
             RendererOptions {
                 msaa_samples: 1,
-                depth_stencil_format: None,
+                depth_stencil_format: settings.surface_depth,
                 dithering: false,
                 predictable_texture_filtering: false,
             },
@@ -185,6 +225,8 @@ impl ContextWgpuHolding {
             egui_state,
             surface_config,
             surface_format,
+            surface_depth_format: settings.surface_depth,
+            surface_depth_view: depth_view
         };
     }
 }

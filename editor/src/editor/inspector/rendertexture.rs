@@ -43,6 +43,7 @@ pub struct RenderTextureJson {
     pub depth_usages_STORAGE_ATOMIC: bool,
     pub depth_usages_STORAGE_BINDING: bool,
     pub depth_usages_TEXTURE_BINDING: bool,
+    pub filter_mode: bool
 }
 
 impl Default for RenderTextureJson {
@@ -58,6 +59,7 @@ impl Default for RenderTextureJson {
             depth_usages_STORAGE_ATOMIC: false,
             depth_usages_STORAGE_BINDING: false,
             depth_usages_TEXTURE_BINDING: false,
+            filter_mode: false
         }
     }
 }
@@ -309,6 +311,10 @@ pub fn draw(path: &Path, ui: &mut egui::Ui) {
         &mut texture_json.attachments[select_id].usages_TEXTURE_BINDING,
         "TEXTURE_BINDING",
     );
+
+    ui.separator();
+    
+    ui.checkbox(&mut  texture_json.filter_mode, "is_linear");
 
     ui.data_mut(|d| {
         d.insert_temp(w_id, width_input);

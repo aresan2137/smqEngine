@@ -74,6 +74,7 @@ impl GenAssets {
                 TextureUsages::RENDER_ATTACHMENT | TextureUsages::empty(),
                 Some("renderer_main_renderTexture_depth"),
             )),
+            FilterMode::Nearest
         );
         let mut renderer_ubodata0_ubo = Ubo::new(context, RendererUbodata0Ubo::default());
         let mut renderer_ubodata1_ubo = Ubo::new(context, RendererUbodata1Ubo::default());

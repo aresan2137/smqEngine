@@ -131,7 +131,12 @@ impl TextureS {
 
     pub fn from_color<D>(context: &Context<D>, color: Color) -> Self {
         let holding = context.holding.as_ref().unwrap();
-        let data = [color.r as u8, color.g as u8, color.b as u8, color.a as u8];
+        let data = [
+            (color.r.clamp(0.0, 1.0) * 255.0).round() as u8,
+            (color.g.clamp(0.0, 1.0) * 255.0).round() as u8,
+            (color.b.clamp(0.0, 1.0) * 255.0).round() as u8,
+            (color.a.clamp(0.0, 1.0) * 255.0).round() as u8
+        ];
 
         let size = Extent3d {
             width: 1,
